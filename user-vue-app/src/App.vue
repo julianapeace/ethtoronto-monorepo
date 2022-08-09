@@ -1,7 +1,11 @@
 <template>
   <div id="app">
-    <h1 style="font-size:100px; margin-top: 1em; padding:0"><b>ZK-NFT</b></h1>
-    <h3 style="">Anonymously prove you own an NFT</h3>
+    <h1 style="font-size:100px; margin-top: 1em; padding:0">
+      <b>ZK-NFT</b>
+    </h1>
+    <h3 style="">
+      Anonymously prove you own an NFT
+    </h3>
     <!--
     1. connect wallet
     2. get a list of NFTs this wallet owns
@@ -9,86 +13,176 @@
     4. receive a proof string
    -->
 
-    <div class="buttonGroup" style="margin: 2em 0 3em 0;">
-      <button class="big-button" v-if="!this.identity_commit" @click="connectWallet">Connect Wallet</button>
-
-      <button class="big-button" v-if="this.identity_commit && !this.joinState" @click="joinGroup">
-        Stake NFT
-        <b-loading :is-full-page="false" v-model="isLoading" :can-cancel="true"></b-loading>
+    <div
+      class="buttonGroup"
+      style="margin: 2em 0 3em 0;"
+    >
+      <button
+        v-if="!identity_commit"
+        class="big-button"
+        @click="connectWallet"
+      >
+        Connect Wallet
       </button>
 
-      <button class="big-button" v-else-if="this.joinState && !this.proof" @click="createProof">Create Proof</button>
+      <button
+        v-if="identity_commit && !joinState"
+        class="big-button"
+        @click="joinGroup"
+      >
+        Stake NFT
+        <b-loading
+          v-model="isLoading"
+          :is-full-page="false"
+          :can-cancel="true"
+        />
+      </button>
+
+      <button
+        v-else-if="joinState && !proof"
+        class="big-button"
+        @click="createProof"
+      >
+        Create Proof
+      </button>
     </div>
 
     <div class="walletConnect">
-      <b-tooltip label="Identity Commit" :delay="300" position="is-right"><p v-if="this.identity_commit" style="">🔐 {{ this.identity_commit }}</p></b-tooltip>
+      <b-tooltip
+        label="Identity Commit"
+        :delay="300"
+        position="is-right"
+      >
+        <p
+          v-if="identity_commit"
+          style=""
+        >
+          🔐 {{ identity_commit }}
+        </p>
+      </b-tooltip>
       <br>
-      <b-tooltip label="Wallet Address" :delay="300" position="is-right"><p v-if="this.currentAccount" style="">🟢 {{ this.currentAccount }}</p></b-tooltip>
+      <b-tooltip
+        label="Wallet Address"
+        :delay="300"
+        position="is-right"
+      >
+        <p
+          v-if="currentAccount"
+          style=""
+        >
+          🟢 {{ currentAccount }}
+        </p>
+      </b-tooltip>
     </div>
 
-    <div v-if="this.proof" class="" style="">
-        <div class="" style="inline-size: 1050px; text-align:center; margin: auto; width: 80% ">
-          <div>
-            <button id="copyToClipboard" v-on:click.prevent="copyToClipboard" class="control button is-medium is-primary is-rounded">Copy 📋</button>
+    <div
+      v-if="proof"
+      class=""
+      style=""
+    >
+      <div
+        class=""
+        style="text-align:center; margin: auto; width: 80%"
+      >
+        <div style="margin: 1rem 0">
+          <button
+            id="copyToClipboard"
+            class="control button is-medium is-primary is-rounded"
+            @click.prevent="copyToClipboard"
+          >
+            Copy 📋
+          </button>
 
-            <button class=" button is-medium" v-if="!readMoreActivated" @click="activateReadMore"> expand</button>
-            <button class=" button is-medium" v-if="readMoreActivated" @click="activateReadMore"> less</button>
-          </div>
-            <b-message v-if="!readMoreActivated" style="overflow-wrap: break-word; word-break: break-all;" >
-               {{this.proof.slice(0, 100)}}....
-           </b-message>
-
-           <b-message v-if="readMoreActivated" style="overflow-wrap: break-word; word-break: break-all;"  >
-              {{this.proof}}
-          </b-message>
-
-            <input type="hidden" id="proof" :value="this.proof">
+          <button
+            v-if="!readMoreActivated"
+            class=" button is-medium"
+            @click="activateReadMore"
+          >
+            expand
+          </button>
+          <button
+            v-if="readMoreActivated"
+            class=" button is-medium"
+            @click="activateReadMore"
+          >
+            less
+          </button>
         </div>
+        <b-message
+          v-if="!readMoreActivated"
+          style="overflow-wrap: break-word; word-break: break-all;"
+        >
+          {{ proof.slice(0, 100) }}....
+        </b-message>
+
+        <b-message
+          v-if="readMoreActivated"
+          style="overflow-wrap: break-word; word-break: break-all;"
+        >
+          {{ proof }}
+        </b-message>
+
+        <input
+          id="proof"
+          type="hidden"
+          :value="proof"
+        >
+      </div>
     </div>
 
+    <div
+      v-if="nftList"
+      class=""
+      style=""
+    >
+      <b-dropdown aria-role="list">
+        <template #trigger="{ active }">
+          <b-button
+            label="Select NFT"
+            type="is-primary"
+            :icon-right="active ? 'menu-up' : 'menu-down'"
+          />
+        </template>
 
-
-      <div v-if="this.nftList" class="" style="">
-        <b-dropdown aria-role="list">
-
-            <template #trigger="{ active }">
-              <b-button
-                  label="Click me!"
-                  type="is-primary"
-                  :icon-right="active ? 'menu-up' : 'menu-down'" />
-            </template>
-
-            <b-dropdown-item
-                v-for="(item, index) in this.nftList"
-                :key="index"
-                :value="item" aria-role="listitem"
-                @click="stakeNft(item)"
-                >
-                <div class="media">
-                    <!-- <b-icon class="media-left" :icon="item.icon"></b-icon> -->
-                    <div class="media-content">
-                        <h3>{{item.name}}</h3>
-                    </div>
-                </div>
-            </b-dropdown-item>
-        </b-dropdown>
+        <b-dropdown-item
+          v-for="(item, index) in nftList"
+          :key="index"
+          :value="item"
+          aria-role="listitem"
+          @click="stakeNft(item)"
+        >
+          <div class="media">
+            <!-- <b-icon class="media-left" :icon="item.icon"></b-icon> -->
+            <div
+              class="media-content"
+              style="text-align: left"
+            >
+              <h3 style="font-weight: bold;">
+                {{ item.name }}
+              </h3>
+              <p
+                v-if="item.metadata"
+                style="white-space: pre-wrap;"
+              >
+                {{ getDesc(item.metadata) }}
+              </p>
+            </div>
+          </div>
+        </b-dropdown-item>
+      </b-dropdown>
     </div>
-
-      <footer class="footer">
-        <div class="content has-text-centered">
-          <!-- TODO: update dorahacks URL -->
+    <footer class="footer">
+      <div class="content has-text-centered">
+        <!-- TODO: update dorahacks URL -->
         <p> <a href="https://dorahacks.io/buidl/2470">EthToronto 2022 Submission 🦄</a> </p>
       </div>
     </footer>
-
-
   </div>
 </template>
 
 <script>
 import { ZkIdentity } from '@zk-kit/identity'
 // import { Semaphore } from "@zk-kit/protocols"
-import HelloWorld from './components/HelloWorld.vue'
 import { abi } from './testStake.json'
 import { ethers } from 'ethers'
 import axios from 'axios'
@@ -135,6 +229,10 @@ export default {
           }
         textToCopy.setAttribute('type', 'hidden')
         window.getSelection().removeAllRanges()
+    },
+    getDesc(metadata) {
+      const jsoned = JSON.parse(metadata)
+      return jsoned.description
     },
     activateReadMore(){
         this.readMoreActivated = !this.readMoreActivated;
@@ -295,13 +393,14 @@ export default {
   color: #2c3e50;
   margin-top: 60px;
   overflow-wrap: break-word;
+  margin-bottom: 150px;
 }
 
 .footer {
   position: fixed;
   bottom: 0;
   width: 100%;
-  height: 2.5rem;
+  height: 100px;
   font-size: 1rem;
 }
 
