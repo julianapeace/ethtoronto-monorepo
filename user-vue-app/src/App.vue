@@ -9,7 +9,7 @@
     4. receive a proof string
    -->
 
-    <div class="buttonGroup" style="margin-top: 2em;">
+    <div class="buttonGroup" style="margin: 2em 0 3em 0;">
       <button class="big-button" v-if="!this.identity_commit" @click="connectWallet">Connect Wallet</button>
 
       <button class="big-button" v-if="this.identity_commit && !this.joinState" @click="joinGroup">
@@ -28,16 +28,17 @@
 
     <div v-if="this.proof" class="" style="">
         <div class="" style="inline-size: 1050px; text-align:center; margin: auto; width: 80% ">
-          <button id="copyToClipboard" v-on:click.prevent="copyToClipboard" class="control button is-medium is-primary is-rounded">Copy 📋</button>
+          <div>
+            <button id="copyToClipboard" v-on:click.prevent="copyToClipboard" class="control button is-medium is-primary is-rounded">Copy 📋</button>
 
-          <button class=" button is-medium" v-if="!readMoreActivated" @click="activateReadMore"> expand</button>
-          <button class=" button is-medium" v-if="readMoreActivated" @click="activateReadMore"> less</button>
-
-            <b-message v-if="!readMoreActivated" >
+            <button class=" button is-medium" v-if="!readMoreActivated" @click="activateReadMore"> expand</button>
+            <button class=" button is-medium" v-if="readMoreActivated" @click="activateReadMore"> less</button>
+          </div>
+            <b-message v-if="!readMoreActivated" style="overflow-wrap: break-word; word-break: break-all;" >
                {{this.proof.slice(0, 100)}}....
            </b-message>
 
-           <b-message style="inline-size: 1000px; overflow-wrap: break-word; word-break: break-all;" v-if="readMoreActivated" >
+           <b-message v-if="readMoreActivated" style="overflow-wrap: break-word; word-break: break-all;"  >
               {{this.proof}}
           </b-message>
 
@@ -289,7 +290,7 @@ export default {
 }
 
 .footer {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   width: 100%;
   height: 2.5rem;
