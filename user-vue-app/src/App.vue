@@ -62,7 +62,7 @@
                 v-for="(item, index) in this.nftList"
                 :key="index"
                 :value="item" aria-role="listitem"
-                @click="stakeNFT(item)"
+                @click="stakeNft(item)"
                 >
                 <div class="media">
                     <!-- <b-icon class="media-left" :icon="item.icon"></b-icon> -->
@@ -105,6 +105,7 @@ export default {
         'set this to your contract address, if you have more than one contract create more specific variables(greeterAddress or votingAddress)',
       contract: null,
       nftList: null,
+      selectedNft: null,
       identity_secret: null,
       identity_commit: null,
       client: null,
@@ -147,8 +148,9 @@ export default {
       this.identity_commit = identityCommitment
       return identityCommitment
     },
-    stakeNFT: async function (item) {
-      console.log('jm stakeNFT item: ', item);
+    stakeNft: async function (item) {
+      this.selectedNft = item
+      console.log('jm selectedNft: ', this.selectedNft);
     },
     connectWallet: async function () {
       try {
@@ -221,6 +223,12 @@ export default {
         )
         this.joinState = true
         this.isLoading = false
+
+        // const isApproved = await stakingContract.isApprovedForAll(
+        //   this.currentAddress,
+        //   SEMAPHORE_STAKING_CONTRACT_ADDRESS
+        // )
+
         // console.log(await r.wait())
       } catch (e) {
         this.$buefy.toast.open(`Error: Unable to connect to wallet${e}`)
