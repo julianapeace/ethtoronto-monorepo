@@ -45,13 +45,24 @@
         </div>
     </div>
 
-    <p>{{this.nftList}}</p>
-    <div v-if="this.nftList" class="" style="">
+
+
+      <div v-if="this.nftList" class="" style="">
         <b-dropdown aria-role="list">
+
+            <template #trigger="{ active }">
+              <b-button
+                  label="Click me!"
+                  type="is-primary"
+                  :icon-right="active ? 'menu-up' : 'menu-down'" />
+            </template>
+
             <b-dropdown-item
                 v-for="(item, index) in this.nftList"
                 :key="index"
-                :value="item" aria-role="listitem">
+                :value="item" aria-role="listitem"
+                @click="stakeNFT(item)"
+                >
                 <div class="media">
                     <!-- <b-icon class="media-left" :icon="item.icon"></b-icon> -->
                     <div class="media-content">
@@ -128,10 +139,15 @@ export default {
     },
     getZKIdentity() {
       const identity = new ZkIdentity()
+      console.log('jm: identity', identity);
       const identityCommitment = identity.genIdentityCommitment()
+      console.log('jm: identityCommitment', identityCommitment);
       this.identity_secret = identity
       this.identity_commit = identityCommitment
       return identityCommitment
+    },
+    stakeNFT: async function (item) {
+      console.log('jm stakeNFT item: ', item);
     },
     connectWallet: async function () {
       try {
@@ -143,10 +159,15 @@ export default {
             const client = await injected.connect()
             this.client = client
             console.log(`Injected client: ${client}`)
-            const ZKID = await client.getActiveIdentity()
             // console.log(await client.getIdentityCommitments())
             // console.log(await client.getActiveIdentity())
-            this.identity_commit = ZKID
+            if(!this.identity_commit) {
+              this.getZKIdentity()
+            } else {
+              const ZKID = await client.getActiveIdentity()
+              console.log('jm: ', ZKID);
+              this.identity_commit = ZKID
+            }
           } catch (e) {
             // should prompt metamask to open
             this.$buefy.toast.open(`Need to connect Metamask and ZK-Keeper-Plugin`);
@@ -172,6 +193,7 @@ export default {
         this.contract = contract
         this.provider = provider
         this.currentAccount = await signer.getAddress()
+        this.getZKIdentity()
         const get_url = 'https://deep-index.moralis.io/api/v2/'+ this.currentAccount +'/nft?chain=eth&format=decimal'
         const response = await axios.get(get_url, {
           headers: {
