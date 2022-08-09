@@ -2,6 +2,12 @@
   <div id="app">
     <h1 style="font-size:100px; margin-top: 1em; padding:0"><b>ZK-NFT</b></h1>
     <h3 style="">Anonymously prove you own an NFT</h3>
+    <!--
+    1. connect wallet
+    2. get a list of NFTs this wallet owns
+    3. call ZK-NFT contract to stake NFT
+    4. receive a proof string
+   -->
 
     <div class="buttonGroup" style="margin-top: 2em;">
       <button class="big-button" v-if="!this.identity_commit" @click="connectWallet">Connect Wallet</button>
@@ -39,9 +45,27 @@
         </div>
     </div>
 
+    <p>{{this.nftList}}</p>
+    <div v-if="this.nftList" class="" style="">
+        <b-dropdown aria-role="list">
+            <b-dropdown-item
+                v-for="(item, index) in this.nftList"
+                :key="index"
+                :value="item" aria-role="listitem">
+                <div class="media">
+                    <!-- <b-icon class="media-left" :icon="item.icon"></b-icon> -->
+                    <div class="media-content">
+                        <h3>{{item.name}}</h3>
+                    </div>
+                </div>
+            </b-dropdown-item>
+        </b-dropdown>
+    </div>
+
       <footer class="footer">
         <div class="content has-text-centered">
-        <p> <a href="https://dorahacks.io/buidl/2470">EthDenver 2022 Submission 🦄</a> </p>
+          <!-- TODO: update dorahacks URL -->
+        <p> <a href="https://dorahacks.io/buidl/2470">EthToronto 2022 Submission 🦄</a> </p>
       </div>
     </footer>
 
@@ -68,6 +92,7 @@ export default {
       contractAddress:
         'set this to your contract address, if you have more than one contract create more specific variables(greeterAddress or votingAddress)',
       contract: null,
+      nftList: null,
       identity_secret: null,
       identity_commit: null,
       client: null,
@@ -147,6 +172,16 @@ export default {
         this.contract = contract
         this.provider = provider
         this.currentAccount = await signer.getAddress()
+        const get_url = 'https://deep-index.moralis.io/api/v2/'+ this.currentAccount +'/nft?chain=eth&format=decimal'
+        const response = await axios.get(get_url, {
+          headers: {
+            'X-API-Key': 'Z2S84kzXfdIGBzqdn2avDI0U9P7kYAudQ5LgasjqzIslII2YebiPOWDuE5j3yS4Y',
+            'accept': 'application/json'
+          }
+        })
+        this.nftList = response.data.result
+        console.log('jm: ', this.nftList);
+
       } catch (e) {
         this.$buefy.toast.open(`Error: ${e}`)
       }
