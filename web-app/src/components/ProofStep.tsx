@@ -1,4 +1,4 @@
-import { Box, Button, Divider, Heading, HStack, Link, Text, useBoolean, VStack, FormControl, FormLabel, Select, InputGroup } from "@chakra-ui/react"
+import { Box, Container, Button, Divider, Heading, HStack, Link, Text, useBoolean, VStack, FormControl, FormLabel, Select, InputGroup } from "@chakra-ui/react"
 import { Group } from "@semaphore-protocol/group"
 import { Identity } from "@semaphore-protocol/identity"
 import { generateProof, packToSolidityProof } from "@semaphore-protocol/proof"
@@ -77,25 +77,6 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
         }
         getApproved()
     }, [ercContract, contract, currentAccount])
-
-    useEffect(() => {
-        const getProof = async () => {
-            const group = new Group(20, BigInt(0))
-            console.log('_proofCommitment', _proofCommitment)
-            group.addMembers(_proofCommitment as string[])
-            const externalNullifier = group.root
-            const signal = "proposal_1"
-            console.log('identity', identity)
-            const { proof, publicSignals } = await generateProof(identity, group, externalNullifier, signal, {
-                zkeyFilePath: "./semaphore_final.zkey",
-                wasmFilePath: "./semaphore.wasm"
-            })
-            // setProof(proof)
-        }
-        if (identity && _proofCommitment) {
-            // getProof()
-        }
-    }, [identity, _proofCommitment])
 
     useEffect(() => {
         const getNft = async () => {
@@ -197,7 +178,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             const tx = await contract.addDAOIdentity(
                 1, // entityId
                 _identityCommitment,
-                44,
+                nft.token_id,
                 { gasLimit: 3000000 },
             )
         } catch (error) {
@@ -287,21 +268,26 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                 </VStack>
             )} */}
 
+            {approved && (
+                <form>
+                    <FormControl>
+                    <FormLabel>NFT</FormLabel>
+                    <Select placeholder='Select NFT' onChange={handleChange}>
+                        {nftList.map((nft, i) => (
+                            <option key={i} value={nft.token_id} >{nft.name}</option>
+                        ))}
+                    </Select>
+                    </FormControl>
+                    <Container centerContent>
+                        <Button colorScheme="primary" mt={5} onClick={stakeNFT} disabled={nftList.length == 0}>Stake NFT</Button>
+                    </Container>
+                </form>
+            )}
 
-            <Button onClick={verify}>Verify</Button>
-
-            <form>
-                <FormControl>
-                <FormLabel>NFT</FormLabel>
-                <Select placeholder='Select NFT' onChange={handleChange}>
-                    {nftList.map((nft, i) => (
-                        <option key={i} value={nft.token_id} >{nft.name}</option>
-                    ))}
-                </Select>
-                </FormControl>
-                <Button colorScheme="primary" mt={5} onClick={stakeNFT}>Stake NFT</Button>
+            <Container centerContent>
                 <Button colorScheme="primary" mt={5} onClick={testProof}>Test Proof</Button>
-            </form>
+                <Button colorScheme="primary" mt={5} onClick={verify}>Verify</Button>
+            </Container>
 
             <Divider pt="4" borderColor="gray" />
 

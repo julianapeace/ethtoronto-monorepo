@@ -86,7 +86,7 @@ function App() {
 
     return (
         <>
-            <Container flex="1" display="flex" alignItems="center" centerContent>
+            <Container flex="1" display="flex" alignItems="center" centerContent mb={5}>
               <h1>ZK-NFT ✨</h1>
               {currentAccount && <Tooltip placement='right' hasArrow label='Private Trapdoor' bg='gray.500'><p>🟢  { currentAccount }</p></Tooltip>}
                 {!currentAccount && <Button mt={5} onClick={connectWallet} colorScheme="primary" >Connect Wallet</Button>}
