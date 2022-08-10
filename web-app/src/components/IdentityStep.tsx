@@ -1,4 +1,12 @@
-import { Box, Button, Divider, Heading, HStack, Link, ListItem, OrderedList, Text, VStack } from "@chakra-ui/react"
+import { Box, Button, Divider, Heading, HStack, Link, ListItem, OrderedList, Text, Tooltip, useToast, VStack, IconButton,
+    Table,
+    Thead,
+    Tbody,
+    Tr,
+    Th,
+    Td,
+    TableContainer } from "@chakra-ui/react"
+import { CopyIcon } from '@chakra-ui/icons'
 import { Identity } from "@semaphore-protocol/identity"
 import { useCallback, useEffect, useState } from "react"
 import IconAddCircleFill from "../icons/IconAddCircleFill"
@@ -27,6 +35,18 @@ export default function IdentityStep({ onChange, onNextClick, onLog }: IdentityS
             onLog("Create your Semaphore identity 👆🏽")
         }
     }, [])
+
+    const toast = useToast()
+    const copyToClipboard = async function (value: string) {
+      navigator.clipboard.writeText(value)
+      toast({
+          title: 'Copied',
+          // description: "We've created your account for you.",
+          status: 'success',
+          duration: 6000,
+          isClosable: true,
+        })
+    }
 
     const createIdentity = useCallback(async () => {
         const identity = new Identity()
@@ -70,11 +90,34 @@ export default function IdentityStep({ onChange, onNextClick, onLog }: IdentityS
 
             {_identity ? (
                 <Box w="100%" py="6">
-                    <VStack alignItems="start" p="5" borderWidth={1} borderColor="gray.500" borderRadius="4px">
-                        <Text>Trapdoor: {_identity.getTrapdoor().toString().substring(0, 30)}...</Text>
-                        <Text>Nullifier: {_identity.getNullifier().toString().substring(0, 30)}...</Text>
-                        <Text>Commitment: {_identity.generateCommitment().toString().substring(0, 30)}...</Text>
-                    </VStack>
+                    <TableContainer>
+                      <Table variant='simple' size='sm'>
+                        <Thead>
+                          <Tr>
+                            <Th>Name</Th>
+                            <Th>Hash</Th>
+                            <Th>Copy</Th>
+                          </Tr>
+                        </Thead>
+                        <Tbody>
+                          <Tr>
+                            <Td>Trapdoor</Td>
+                            <Td>{_identity.getTrapdoor().toString().substring(0, 30)}...</Td>
+                            <Td><IconButton aria-label='Trapdoor' icon={<CopyIcon />} onClick={() =>  copyToClipboard(_identity.getTrapdoor())}/> </Td>
+                          </Tr>
+                          <Tr>
+                            <Td>Nullifier</Td>
+                            <Td>{_identity.getNullifier().toString().substring(0, 30)}...</Td>
+                            <Td><IconButton aria-label='Nullifier'  icon={<CopyIcon />} onClick={() => copyToClipboard(_identity.getNullifier())}/></Td>
+                          </Tr>
+                          <Tr>
+                            <Td>Commitment</Td>
+                            <Td>{_identity.generateCommitment().toString().substring(0, 30)}...</Td>
+                            <Td><IconButton aria-label='Commitment'  icon={<CopyIcon />} onClick={() =>  copyToClipboard(_identity.generateCommitment())}/></Td>
+                          </Tr>
+                        </Tbody>
+                      </Table>
+                    </TableContainer>
                 </Box>
             ) : (
                 <Box py="6">

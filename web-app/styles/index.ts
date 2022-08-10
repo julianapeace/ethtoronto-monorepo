@@ -5,7 +5,7 @@ import components from "./components"
 
 const config = {
     fonts: {
-        heading: "Inter, sans-serif",
+        heading: "Montserrat, Inter, sans-serif",
         body: "Inter, sans-serif"
     },
     colors,
