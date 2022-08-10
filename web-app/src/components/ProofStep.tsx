@@ -1,4 +1,5 @@
-import { Box, Button, Divider, Heading, HStack, Link, Text, useBoolean, VStack, FormControl, FormLabel, Select, InputGroup, useToast } from "@chakra-ui/react"
+import { Box, Button, Divider, Heading, HStack, Link, Text, useToast, Container, IconButton } from "@chakra-ui/react"
+import { CopyIcon } from '@chakra-ui/icons'
 import { Group } from "@semaphore-protocol/group"
 import { Identity } from "@semaphore-protocol/identity"
 import { generateProof, packToSolidityProof } from "@semaphore-protocol/proof"
@@ -24,10 +25,7 @@ export type ProofStepProps = {
 
 export default function ProofStep({ currentAccount, signer, ercContract, contract, event, identity, onPrevClick, onLog }: ProofStepProps) {
     // const [_loading, setLoading] = useBoolean()
-    const [balance, setBalance] = useState<string>(0)
-    const [_reviews, setReviews] = useState<any[]>([])
-    const [nftList, setNftList] = useState<any[]>([])
-    const [nft, setNft] = useState<any>()
+    const [balance, setBalance] = useState<string>('0')
     const [_identityCommitment, setIdentityCommitment] = useState<string>()
     const [_proof, setProof] = useState<any>()
     const [_proofCommitment, setProofCommitment] = useState<string[]>()
@@ -82,7 +80,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                 console.log("NO contract returning")
                 return;
             }
-            const balance:number =await ercContract.balanceOf(currentAccount,1)
+            const balance = await ercContract.balanceOf(currentAccount,1)
             console.log(balance,"the balance")
             if (balance > 0){
                 setBalance(balance.toString())
@@ -110,16 +108,11 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
         }
     }
 
-    const handleChange = (e: any) => {
-        const selectedNft = nftList.find(item => item.token_id === e.target.value)
-        setNft(selectedNft)
-    }
-
     const stakeNFT = async() => {
-        console.log('selectedNft', nft)
         if (!contract || !_identityCommitment) {
             return;
         }
+        setLoading({ ...loading, stake: true })
         try {
             let tx = await contract.addDAOIdentity(
                 1, // entityId
@@ -132,12 +125,14 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
         } catch (error) {
             console.error(error)
         }
+        setLoading({ ...loading, stake: false })
     }
 
     const testProof = async () => {
         if (!contract) {
             return;
         }
+        setLoading({ ...loading, proof: true })
         const group = new Group(20, BigInt(0))
         console.log('_proofCommitment', _proofCommitment)
         group.addMembers(_proofCommitment as string[])
@@ -170,6 +165,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
         
         console.log(hexified)
         setDisplay(hexified)
+        setLoading({ ...loading, proof: false })
     }
    
     return (
@@ -188,19 +184,22 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
 
             <Divider pt="5" borderColor="gray.500" />
 
-            <form>
-                <FormControl>
-                <FormLabel>NFT</FormLabel>
-                <FormLabel>Balance:{balance}</FormLabel>
-                </FormControl>
+            <Container centerContent>
+                <p>NFT</p>
+                <p>Balance:{balance}</p>
                 {hasStaked ? (
-                    <Button colorScheme="primary" mt={5} onClick={testProof}>Generate Proof</Button>   
+                    <Button colorScheme="primary" mt={7} onClick={testProof} style={{width: '200px'}}>Generate Proof</Button>   
                 ) : (
-                    <Button colorScheme="primary" mt={5} onClick={stakeNFT}>Stake NFT</Button>
+                    <Button colorScheme="primary" mt={7} onClick={stakeNFT} style={{width: '200px'}}>Stake NFT</Button>
                 )}
-            </form>
+            </Container>
 
-            <p style={{ wordWrap: "break-word",maxWidth:"1000px"}} >{displayProof}</p>
+            {displayProof && (
+                <Container>
+                    Copy<IconButton aria-label='Trapdoor' icon={<CopyIcon />} onClick={() =>  copyToClipboard(displayProof)}/>
+                    {displayProof}
+                </Container>
+            )}
             <Divider pt="4" borderColor="gray" />
 
             <Stepper step={2} onPrevClick={onPrevClick} />
