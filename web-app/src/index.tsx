@@ -27,7 +27,7 @@ function App() {
     const [currentAccount, setCurrentAccount] = useState<string>()
     const [_event, setEvent] = useState<any>()
     const [loading, setLoading] = useState<boolean>(false)
-    
+
     const contractAddress = '0x6caf636b6e3c09548E02225b0A6Ab2E0Bc2da1C7'
     const nftContractAddress = '0x7b6e19f2748b2ce25c7b2b2837dd9722d81943aa'
 
