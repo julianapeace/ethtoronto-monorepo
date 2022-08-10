@@ -1,4 +1,5 @@
-import { Box, Container, Button, Divider, Heading, HStack, Link, Text, useBoolean, VStack, FormControl, FormLabel, Select, InputGroup } from "@chakra-ui/react"
+import { Box, Container, Button, Divider, Heading, HStack, Link, Text, useBoolean, VStack, FormControl, FormLabel, Select, InputGroup, IconButton, useToast } from "@chakra-ui/react"
+import { CopyIcon } from '@chakra-ui/icons'
 import { Group } from "@semaphore-protocol/group"
 import { Identity } from "@semaphore-protocol/identity"
 import { generateProof, packToSolidityProof } from "@semaphore-protocol/proof"
@@ -37,6 +38,18 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
         proof: false,
         verify: false
     })
+
+    const toast = useToast()
+    const copyToClipboard = async function (value: string) {
+        navigator.clipboard.writeText(value)
+        toast({
+            title: 'Copied',
+            // description: "We've created your account for you.",
+            status: 'success',
+            duration: 6000,
+            isClosable: true,
+          })
+      }
 
     const getReviews = useCallback(async () => {
         if (!signer || !contract) {
@@ -305,7 +318,13 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                 <Button colorScheme="primary" mt={5} onClick={verify} isLoading={loading['verify']} style={{minWidth: '200px'}}>Verify</Button>
             </Container> */}
 
-            <Container>{_proof}</Container>
+            
+            {_proof && (
+                <Container>
+                    Copy<IconButton aria-label='Trapdoor' icon={<CopyIcon />} onClick={() =>  copyToClipboard(_proof)}/>
+                    {_proof}
+                </Container>
+            )}
 
             <Divider pt="4" borderColor="gray" />
 
