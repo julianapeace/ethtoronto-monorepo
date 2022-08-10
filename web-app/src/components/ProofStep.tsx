@@ -1,4 +1,4 @@
-import { Box, Button, Divider, Heading, HStack, Link, Text, useBoolean, VStack } from "@chakra-ui/react"
+import { Box, Button, Divider, Heading, HStack, Link, Text, useBoolean, VStack, FormControl, FormLabel, Select, InputGroup } from "@chakra-ui/react"
 import { Group } from "@semaphore-protocol/group"
 import { Identity } from "@semaphore-protocol/identity"
 import { generateProof, packToSolidityProof } from "@semaphore-protocol/proof"
@@ -8,8 +8,10 @@ import { useCallback, useEffect, useState } from "react"
 import IconAddCircleFill from "../icons/IconAddCircleFill"
 import IconRefreshLine from "../icons/IconRefreshLine"
 import Stepper from "./Stepper"
+import axios from "axios"
 
 export type ProofStepProps = {
+    currentAccount: string
     signer?: Signer
     contract?: Contract
     identity: Identity
@@ -18,9 +20,14 @@ export type ProofStepProps = {
     onLog: (message: string) => void
 }
 
-export default function ProofStep({ signer, contract, event, identity, onPrevClick, onLog }: ProofStepProps) {
+export default function ProofStep({ currentAccount, signer, contract, event, identity, onPrevClick, onLog }: ProofStepProps) {
     const [_loading, setLoading] = useBoolean()
     const [_reviews, setReviews] = useState<any[]>([])
+    const [nftList, setNftList] = useState<any[]>([])
+    const [nft, setNft] = useState<any>()
+    const [_identityCommitment, setIdentityCommitment] = useState<string>()
+    const [_proof, setProof] = useState<any>()
+    const [_proofCommitment, setProofCommitment] = useState<string>()
 
     const getReviews = useCallback(async () => {
         if (!signer || !contract) {
@@ -33,8 +40,58 @@ export default function ProofStep({ signer, contract, event, identity, onPrevCli
     }, [signer, contract, event])
 
     useEffect(() => {
-        getReviews().then(setReviews)
+        // getReviews().then(setReviews)
     }, [signer, contract, event])
+
+    useEffect(() => {
+        const getAllCommitments = async () => {
+            if (!contract) {
+                return
+            }
+            const commitments = await contract.getTreeInfo(1)
+            console.log('commitments', commitments);
+        }
+        getAllCommitments()
+    }, [contract])
+
+    // useEffect(() => {
+    //     const getProof = async () => {
+    //         const group = new Group(20, BigInt(0))
+    //         const externalNullifier = group.root
+    //         const signal = "proposal_1"
+    //         console.log('identity', identity)
+    //         const { proof, publicSignals } = await generateProof(identity, group, externalNullifier, signal, {
+    //             zkeyFilePath: "./semaphore_final.zkey",
+    //             wasmFilePath: "./semaphore.wasm"
+    //         })
+    //         console.log('proof---', proof);
+    //         setProof(proof)
+    //     }
+    //     if (identity) {
+    //         getProof()
+    //     }
+    // }, [identity])
+
+    useEffect(() => {
+        const getNft = async () => {
+            const get_url = 'https://deep-index.moralis.io/api/v2/'+ currentAccount +'/nft?chain=eth&format=decimal'
+            const response = await axios.get(get_url, {
+              headers: {
+                'X-API-Key': 'Z2S84kzXfdIGBzqdn2avDI0U9P7kYAudQ5LgasjqzIslII2YebiPOWDuE5j3yS4Y',
+                'accept': 'application/json'
+              }
+            })
+            console.log('response.data.result', response.data.result)
+            setNftList(response.data.result)
+        }
+        if (currentAccount) {
+            getNft();
+        }
+    }, [currentAccount])
+
+    useEffect(() => {
+        setIdentityCommitment(identity.generateCommitment().toString())
+    }, [identity])
 
     const postReview = useCallback(async () => {
         if (contract && identity) {
@@ -87,6 +144,27 @@ export default function ProofStep({ signer, contract, event, identity, onPrevCli
         }
     }, [contract, identity])
 
+    const handleChange = (e: any) => {
+        const selectedNft = nftList.find(item => item.token_id === e.target.value)
+        setNft(selectedNft)
+    } 
+
+    const stakeNFT = async() => {
+        console.log('selectedNft', nft)
+        if (!contract || !_identityCommitment) {
+            return;
+        }
+        try {
+            const tx = await contract.addDAOIdentity(
+                1, // entityId
+                _identityCommitment,
+                nft.token_id,
+            )
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
     return (
         <>
             <Heading as="h2" size="xl">
@@ -104,9 +182,9 @@ export default function ProofStep({ signer, contract, event, identity, onPrevCli
 
             <Divider pt="5" borderColor="gray.500" />
 
-            <HStack pt="5" justify="space-between">
+            {/* <HStack pt="5" justify="space-between">
                 <Text fontWeight="bold" fontSize="lg">
-                    <b>{event.eventName}</b> ({event.members.length})
+                    <b>{event.eventName}</b> ({event.members.length}) 
                 </Text>
                 <Button
                     leftIcon={<IconRefreshLine />}
@@ -141,7 +219,20 @@ export default function ProofStep({ signer, contract, event, identity, onPrevCli
                         </HStack>
                     ))}
                 </VStack>
-            )}
+            )} */}
+
+            <form>
+                <FormControl>
+                <FormLabel>NFT</FormLabel>
+                <Select placeholder='Select NFT' onChange={handleChange}>
+                    {nftList.map((nft, i) => (
+                        <option key={i} value={nft.token_id} >{nft.name}</option>
+                    ))}
+                </Select>
+                </FormControl>
+                <Button colorScheme="primary" mt={5} onClick={stakeNFT}>Stake NFT</Button>
+            </form>
+
 
             <Divider pt="4" borderColor="gray" />
 

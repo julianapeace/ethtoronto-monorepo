@@ -39,7 +39,8 @@ export default function GroupStep({ signer, contract, identity, onPrevClick, onS
 
     useEffect(() => {
         ;(async () => {
-            const events = await getEvents()
+            // const events = await getEvents();
+            const events = [] 
 
             if (events.length > 0) {
                 setEvents(events)
@@ -67,11 +68,8 @@ export default function GroupStep({ signer, contract, identity, onPrevClick, onS
 
                 try {
                     const transaction = await contract.createEvent(formatBytes32String(eventName))
-
                     await transaction.wait()
-
                     setEvents(await getEvents())
-
                     onLog(`The '${eventName}' event was just created 🎉`)
                 } catch (error) {
                     console.error(error)
@@ -107,7 +105,6 @@ export default function GroupStep({ signer, contract, identity, onPrevClick, onS
                     if (status === 200) {
                         event.members.push(_identityCommitment)
                         onSelect(event)
-
                         onLog(`You joined the '${event.eventName}' event 🎉 Post your anonymous reviews!`)
                     } else {
                         onLog("Some error occurred, please try again!")

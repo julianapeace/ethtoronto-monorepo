@@ -1,12 +1,14 @@
-import { ChakraProvider, Container, HStack, Spinner, Stack, Text } from "@chakra-ui/react"
+import { ChakraProvider, Container, HStack, Spinner, Stack, Text, Button } from "@chakra-ui/react"
 import "@fontsource/inter/400.css"
 import detectEthereumProvider from "@metamask/detect-provider"
 import { Identity } from "@semaphore-protocol/identity"
 import { Contract, providers, Signer } from "ethers"
+import axios from 'axios'
 import { hexlify } from "ethers/lib/utils"
+import { ZkIdentity } from '@zk-kit/identity'
 import { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
-import Events from "./contract/abi.json"
+import Events from "./contract/Staking.json"
 import theme from "../styles"
 import GroupStep from "./components/GroupStep"
 import IdentityStep from "./components/IdentityStep"
@@ -18,8 +20,10 @@ function App() {
     const [_identity, setIdentity] = useState<Identity>()
     const [_signer, setSigner] = useState<Signer>()
     const [_contract, setContract] = useState<Contract>()
+    const [currentAccount, setCurrentAccount] = useState<string>()
     const [_event, setEvent] = useState<any>()
-    const contractAddress = '0x0986526Ab886c1B593Ba67A48c006D44481e49Aa'
+    
+    const contractAddress = '0x1D68aE7BA2782F7ffF506F3aa382d0c6581643D0'
 
     useEffect(() => {
         ;(async () => {
@@ -39,14 +43,14 @@ function App() {
 
             if (accounts[0]) {
                 setSigner(ethersProvider.getSigner())
-
                 setContract(new Contract(contractAddress!, Events.abi, ethersProvider.getSigner()))
+                console.log('accounts', accounts[0])
+                setCurrentAccount(accounts[0])
             }
 
             ethereum.on("accountsChanged", (newAccounts: string[]) => {
                 if (newAccounts.length !== 0) {
                     setSigner(ethersProvider.getSigner())
-
                     setContract(new Contract(contractAddress!, Events.abi, ethersProvider.getSigner()))
                 } else {
                     setSigner(undefined)
@@ -55,13 +59,32 @@ function App() {
         })()
     }, [])
 
+    const connectWallet = async () => {
+        try {
+          const ethereum = (await detectEthereumProvider()) as any
+    
+          if (!ethereum) {
+            alert("Get MetaMask!");
+            return;
+          }
+    
+          const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+    
+          console.log("Connected", accounts[0]);
+          setCurrentAccount(accounts[0]); 
+        } catch (error) {
+          console.log(error)
+        }
+      }
+
     return (
         <>
-            <Container maxW="lg" flex="1" display="flex" alignItems="center">
-                <Stack>
+            <Container maxW="lg" flex="1" display="flex" alignItems="center" centerContent>
+                {!currentAccount && <Button mt={5} onClick={connectWallet} colorScheme='blue'>Connect</Button>}
+                {currentAccount && (<Stack mt={5}>
                     {_step === 1 ? (
                         <IdentityStep onChange={setIdentity} onLog={setLogs} onNextClick={() => setStep(2)} />
-                    ) : _step === 2 ? (
+                    ) : _step === 3 ? (
                         <GroupStep
                             signer={_signer}
                             contract={_contract}
@@ -75,6 +98,7 @@ function App() {
                         />
                     ) : (
                         <ProofStep
+                            currentAccount={currentAccount}
                             signer={_signer}
                             contract={_contract}
                             identity={_identity as Identity}
@@ -84,6 +108,7 @@ function App() {
                         />
                     )}
                 </Stack>
+                )}
             </Container>
 
             <HStack

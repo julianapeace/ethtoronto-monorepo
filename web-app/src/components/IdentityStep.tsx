@@ -19,9 +19,8 @@ export default function IdentityStep({ onChange, onNextClick, onLog }: IdentityS
 
         if (identityString) {
             const identity = new Identity(identityString)
-
             setIdentity(identity)
-
+            console.log('identity', identity)
             onChange(identity)
             onLog("Your Semaphore identity was retrieved from the browser cache 👌🏽")
         } else {
@@ -31,11 +30,8 @@ export default function IdentityStep({ onChange, onNextClick, onLog }: IdentityS
 
     const createIdentity = useCallback(async () => {
         const identity = new Identity()
-
         setIdentity(identity)
-
         localStorage.setItem("identity", identity.toString())
-
         onChange(identity)
         onLog("Your new Semaphore identity was just created 🎉")
     }, [])
