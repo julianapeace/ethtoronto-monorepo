@@ -102,8 +102,8 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                 }
             })
 
-            console.log('response.data.result', response.data.result)
-            setNftList(response.data.result)
+            console.log('response.data.result', response.data.asset_events)
+            setNftList(response.data.asset_events)
         }
         if (currentAccount) {
             getNft();
@@ -172,12 +172,11 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
     }
 
     const handleChange = (e: any) => {
-        const selectedNft = nftList.find(item => item.token_id === e.target.value)
+        const selectedNft = nftList.find(item => item.asset.token_id === e.target.value)
         setNft(selectedNft)
     }
 
     const stakeNFT = async() => {
-        console.log('selectedNft', nft)
         if (!contract || !_identityCommitment) {
             return;
         }
@@ -186,7 +185,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             const tx = await contract.addDAOIdentity(
                 1, // entityId
                 _identityCommitment,
-                nft.token_id,
+                nft.asset.token_id,
                 { gasLimit: 3000000 },
             )
         } catch (error) {
@@ -234,8 +233,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                 <Link href="https://semaphore.appliedzkp.org/docs/guides/proofs" color="primary.500" isExternal>
                     prove
                 </Link>{" "}
-                that they are part of a group and that they are generating their own signals. Signals could be anonymous
-                votes, leaks, or reviews.
+                that they are part of a group and that they are generating their own signals.
             </Text>
 
             <Divider pt="5" borderColor="gray.500" />
@@ -282,22 +280,21 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             {approved && (
                 <form>
                     <FormControl>
-                    <FormLabel>NFT</FormLabel>
                     <Select placeholder='Select NFT' onChange={handleChange}>
                         {nftList.map((nft, i) => (
-                            <option key={i} value={nft.token_id} >{nft.name}</option>
+                            <option key={i} value={nft.asset.token_id} >token_id: {nft.asset.token_id}</option>
                         ))}
                     </Select>
                     </FormControl>
                     <Container centerContent>
-                        <Button colorScheme="primary" mt={5} onClick={stakeNFT} disabled={nftList.length == 0 || !nft} isLoading={loading['stake']}>Stake NFT</Button>
+                        <Button colorScheme="primary" mt={5} onClick={stakeNFT} disabled={nftList.length == 0 || !nft} isLoading={loading['stake']} style={{minWidth: '200px'}}>Stake NFT</Button>
                     </Container>
                 </form>
             )}
 
-            <Container centerContent>
-                <Button colorScheme="primary" mt={5} onClick={testProof} isLoading={loading['proof']}>Test Proof</Button>
-                <Button colorScheme="primary" mt={5} onClick={verify} isLoading={loading['verify']}>Verify</Button>
+            <Container centerContent mt={0}>
+                <Button colorScheme="primary" mt={4} onClick={testProof} isLoading={loading['proof']} style={{minWidth: '200px'}}>Test Proof</Button>
+                <Button colorScheme="primary" mt={5} onClick={verify} isLoading={loading['verify']} style={{minWidth: '200px'}}>Verify</Button>
             </Container>
 
             <Divider pt="4" borderColor="gray" />
