@@ -15,7 +15,7 @@ contract Staking is ERC721Holder, SemaphoreCore, SemaphoreGroups, Ownable {
     mapping(address => uint256) private entities;
     mapping(uint256 => address) public membershipTokens;
     mapping(uint256 => uint256) public commitmentNFTs;
-    
+
     IVerifier verifier;
 
     address public asset;
@@ -49,7 +49,7 @@ contract Staking is ERC721Holder, SemaphoreCore, SemaphoreGroups, Ownable {
             id
         );
         groupCommitments[entityId].push(identityCommitment);
-        commitmentNFTs[entityId] = id;
+        commitmentNFTs[identityCommitment] = id;
         _addMember(entityId, identityCommitment);
     }
 
