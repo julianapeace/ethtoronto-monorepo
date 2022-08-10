@@ -6,7 +6,8 @@ const Button = {
         _focus: {
             boxShadow: "none"
         },
-        borderRadius: "4px"
+        borderRadius: "4px",
+        // background:"linear-gradient(135deg,#40E495,#30DD8A,#2BB673)",
     },
     defaultProps: {
         size: "lg"

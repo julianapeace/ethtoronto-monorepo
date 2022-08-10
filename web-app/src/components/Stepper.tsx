@@ -27,7 +27,7 @@ export default function Stepper({ step, onPrevClick, onNextClick }: StepperProps
             )}
 
             <Text textAlign="center" flex="1" fontWeight="bold">
-                {step.toString()}/3
+                {step.toString()}/2
             </Text>
 
             {onNextClick !== undefined ? (

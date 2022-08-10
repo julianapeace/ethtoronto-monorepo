@@ -12,6 +12,7 @@
         "path-browserify": "^1.0.1"
     },
     "dependencies": {
+        "@chakra-ui/icons": "^2.0.6",
         "@chakra-ui/react": "^2.2.1",
         "@chakra-ui/theme": "^2.1.0",
         "@chakra-ui/theme-tools": "^2.0.2",

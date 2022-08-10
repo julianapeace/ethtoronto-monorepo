@@ -29,6 +29,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
     const [_identityCommitment, setIdentityCommitment] = useState<string>()
     const [_proof, setProof] = useState<any>()
     const [_proofCommitment, setProofCommitment] = useState<string[]>()
+    const [approved, setApproved] = useState<boolean>(false)
 
     const getReviews = useCallback(async () => {
         if (!signer || !contract) {
@@ -68,10 +69,10 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                 return;
             }
             const approved = await ercContract.isApprovedForAll(currentAccount, contract.address) // owner, operator
-            console.log('approved---', approved);
+            setApproved(approved)
             if (!approved) {
                 const approve = await ercContract.setApprovalForAll(contract.address, true, { gasLimit: 3000000 })
-                console.log('approve---', approve);
+                setApproved(true)
             }
         }
         getApproved()
@@ -89,7 +90,6 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                 zkeyFilePath: "./semaphore_final.zkey",
                 wasmFilePath: "./semaphore.wasm"
             })
-            console.log('proof---', proof);
             // setProof(proof)
         }
         if (identity && _proofCommitment) {
@@ -107,6 +107,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                 'accept': 'application/json'
               }
             })
+
             console.log('response.data.result', response.data.result)
             setNftList(response.data.result)
         }
@@ -243,7 +244,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
 
             {/* <HStack pt="5" justify="space-between">
                 <Text fontWeight="bold" fontSize="lg">
-                    <b>{event.eventName}</b> ({event.members.length}) 
+                    <b>{event.eventName}</b> ({event.members.length})
                 </Text>
                 <Button
                     leftIcon={<IconRefreshLine />}
@@ -298,7 +299,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
 
             <Divider pt="4" borderColor="gray" />
 
-            <Stepper step={3} onPrevClick={onPrevClick} />
+            <Stepper step={2} onPrevClick={onPrevClick} />
         </>
     )
 }
