@@ -105,3 +105,4 @@ dist
 
 # web-app
 .parcel-cache/
+.DS_Store
