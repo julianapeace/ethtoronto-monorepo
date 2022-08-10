@@ -22,7 +22,7 @@ export type ProofStepProps = {
 }
 
 export default function ProofStep({ currentAccount, signer, ercContract, contract, event, identity, onPrevClick, onLog }: ProofStepProps) {
-    const [_loading, setLoading] = useBoolean()
+    // const [_loading, setLoading] = useBoolean()
     const [_reviews, setReviews] = useState<any[]>([])
     const [nftList, setNftList] = useState<any[]>([])
     const [nft, setNft] = useState<any>()
@@ -30,6 +30,11 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
     const [_proof, setProof] = useState<any>()
     const [_proofCommitment, setProofCommitment] = useState<string[]>()
     const [approved, setApproved] = useState<boolean>(false)
+    const [loading, setLoading] = useState<any>({
+        stake: false,
+        proof: false,
+        verify: false
+    })
 
     const getReviews = useCallback(async () => {
         if (!signer || !contract) {
@@ -107,56 +112,56 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
         setIdentityCommitment(identity.generateCommitment().toString())
     }, [identity])
 
-    const postReview = useCallback(async () => {
-        if (contract && identity) {
-            const review = prompt("Please enter your review:")
+    // const postReview = useCallback(async () => {
+    //     if (contract && identity) {
+    //         const review = prompt("Please enter your review:")
 
-            if (review) {
-                setLoading.on()
-                onLog(`Posting your anonymous review...`)
+    //         if (review) {
+    //             setLoading.on()
+    //             onLog(`Posting your anonymous review...`)
 
-                try {
-                    const members = await contract.queryFilter(contract.filters.MemberAdded(event.groupId))
-                    const group = new Group()
+    //             try {
+    //                 const members = await contract.queryFilter(contract.filters.MemberAdded(event.groupId))
+    //                 const group = new Group()
 
-                    group.addMembers(members.map((m) => m.args![1].toString()))
+    //                 group.addMembers(members.map((m) => m.args![1].toString()))
 
-                    const { proof, publicSignals } = await generateProof(
-                        identity,
-                        group,
-                        event.groupId.toString(),
-                        review
-                    )
-                    const solidityProof = packToSolidityProof(proof)
+    //                 const { proof, publicSignals } = await generateProof(
+    //                     identity,
+    //                     group,
+    //                     event.groupId.toString(),
+    //                     review
+    //                 )
+    //                 const solidityProof = packToSolidityProof(proof)
 
-                    const { status } = await fetch(`${process.env.RELAY_URL}/post-review`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            review,
-                            nullifierHash: publicSignals.nullifierHash,
-                            groupId: event.groupId.toString(),
-                            solidityProof
-                        })
-                    })
+    //                 const { status } = await fetch(`${process.env.RELAY_URL}/post-review`, {
+    //                     method: "POST",
+    //                     headers: { "Content-Type": "application/json" },
+    //                     body: JSON.stringify({
+    //                         review,
+    //                         nullifierHash: publicSignals.nullifierHash,
+    //                         groupId: event.groupId.toString(),
+    //                         solidityProof
+    //                     })
+    //                 })
 
-                    if (status === 200) {
-                        setReviews((v) => [...v, review])
+    //                 if (status === 200) {
+    //                     setReviews((v) => [...v, review])
 
-                        onLog(`Your review was posted 🎉`)
-                    } else {
-                        onLog("Some error occurred, please try again!")
-                    }
-                } catch (error) {
-                    console.error(error)
+    //                     onLog(`Your review was posted 🎉`)
+    //                 } else {
+    //                     onLog("Some error occurred, please try again!")
+    //                 }
+    //             } catch (error) {
+    //                 console.error(error)
 
-                    onLog("Some error occurred, please try again!")
-                } finally {
-                    setLoading.off()
-                }
-            }
-        }
-    }, [contract, identity])
+    //                 onLog("Some error occurred, please try again!")
+    //             } finally {
+    //                 setLoading.off()
+    //             }
+    //         }
+    //     }
+    // }, [contract, identity])
 
     const verify = async() => {
         if (contract) {
@@ -174,6 +179,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
         if (!contract || !_identityCommitment) {
             return;
         }
+        setLoading({ ...loading, stake: true })
         try {
             const tx = await contract.addDAOIdentity(
                 1, // entityId
@@ -184,12 +190,14 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
         } catch (error) {
             console.error(error)
         }
+        setLoading({ ...loading, stake: false })
     }
 
     const testProof = async () => {
         if (!contract) {
             return;
         }
+        setLoading({ ...loading, proof: true })
         const group = new Group(20, BigInt(0))
         console.log('_proofCommitment', _proofCommitment)
 
@@ -210,6 +218,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
         let r= await contract.verifyTest(utils.formatBytes32String(signal),nullifierHash,solidityProof,1,{gasLimit:4000000})
         console.log(r)
         console.log("RESULT")
+        setLoading({ ...loading, proof: false })
     }
 
     return (
@@ -279,14 +288,14 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                     </Select>
                     </FormControl>
                     <Container centerContent>
-                        <Button colorScheme="primary" mt={5} onClick={stakeNFT} disabled={nftList.length == 0}>Stake NFT</Button>
+                        <Button colorScheme="primary" mt={5} onClick={stakeNFT} disabled={nftList.length == 0 || !nft} isLoading={loading['stake']}>Stake NFT</Button>
                     </Container>
                 </form>
             )}
 
             <Container centerContent>
-                <Button colorScheme="primary" mt={5} onClick={testProof}>Test Proof</Button>
-                <Button colorScheme="primary" mt={5} onClick={verify}>Verify</Button>
+                <Button colorScheme="primary" mt={5} onClick={testProof} isLoading={loading['proof']}>Test Proof</Button>
+                <Button colorScheme="primary" mt={5} onClick={verify} isLoading={loading['verify']}>Verify</Button>
             </Container>
 
             <Divider pt="4" borderColor="gray" />
