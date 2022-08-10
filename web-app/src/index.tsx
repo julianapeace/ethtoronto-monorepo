@@ -9,7 +9,7 @@ import { ZkIdentity } from '@zk-kit/identity'
 import { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
 import Events from "./contract/Staking.json"
-import ERC721 from "./contract/IERC721.json"
+import ERC721 from "./contract/ERC721-mock-abi.json"
 import theme from "../styles"
 import GroupStep from "./components/GroupStep"
 import IdentityStep from "./components/IdentityStep"
@@ -27,9 +27,10 @@ function App() {
     const [currentAccount, setCurrentAccount] = useState<string>()
     const [_event, setEvent] = useState<any>()
     const [loading, setLoading] = useState<boolean>(false)
-    
+
     const contractAddress = '0x6caf636b6e3c09548E02225b0A6Ab2E0Bc2da1C7'
-    const nftContractAddress = '0xf4682b6e180d5d2012244a784779a426ef350a95'
+    // const nftContractAddress = '0x7b6e19f2748b2ce25c7b2b2837dd9722d81943aa'
+    const nftContractAddress = '0xdba56ad041f0b1a27990cd7f5da0081182708a1d' // with metadata on rinkeby
 
     useEffect(() => {
         ;(async () => {
@@ -50,7 +51,7 @@ function App() {
             if (accounts[0]) {
                 setSigner(ethersProvider.getSigner())
                 setContract(new Contract(contractAddress!, Events.abi, ethersProvider.getSigner()))
-                setErcContract(new Contract(nftContractAddress!, ERC721.abi, ethersProvider.getSigner()))
+                setErcContract(new Contract(nftContractAddress!, ERC721, ethersProvider.getSigner()))
                 console.log('accounts', accounts[0])
                 setCurrentAccount(accounts[0])
             }
@@ -59,7 +60,7 @@ function App() {
                 if (newAccounts.length !== 0) {
                     setSigner(ethersProvider.getSigner())
                     setContract(new Contract(contractAddress!, Events.abi, ethersProvider.getSigner()))
-                    setErcContract(new Contract(nftContractAddress!, ERC721.abi, ethersProvider.getSigner()))
+                    setErcContract(new Contract(nftContractAddress!, ERC721, ethersProvider.getSigner()))
                 } else {
                     setSigner(undefined)
                 }

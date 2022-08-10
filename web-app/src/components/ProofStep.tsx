@@ -10,6 +10,8 @@ import IconRefreshLine from "../icons/IconRefreshLine"
 import Stepper from "./Stepper"
 import axios from "axios"
 
+const nftContractAddress = '0xf4682b6e180d5d2012244a784779a426ef350a95' // with metadata on rinkeby
+
 export type ProofStepProps = {
     currentAccount: string
     signer?: Signer
@@ -85,23 +87,23 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
 
     useEffect(() => {
         const getNft = async () => {
-            const get_url = 'https://deep-index.moralis.io/api/v2/'+ currentAccount +'/nft?chain=eth&format=decimal'
-            const response = await axios.get(get_url, {
-              headers: {
-                'X-API-Key': 'Z2S84kzXfdIGBzqdn2avDI0U9P7kYAudQ5LgasjqzIslII2YebiPOWDuE5j3yS4Y',
-                'accept': 'application/json'
-              }
-            })
-
-            // const get_url='https://testnets-api.opensea.io/api/v1/events?asset_contract_address=0x7b6e19f2748b2ce25c7b2b2837dd9722d81943aa&account_address=' + currentAccount +'&only_opensea=false&limit=20'
+            // const get_url = 'https://deep-index.moralis.io/api/v2/'+ currentAccount +'/nft?chain=eth&format=decimal'
             // const response = await axios.get(get_url, {
-            //     headers: {
-            //       'accept': 'application/json'
-            //     }
+            //   headers: {
+            //     'X-API-Key': 'Z2S84kzXfdIGBzqdn2avDI0U9P7kYAudQ5LgasjqzIslII2YebiPOWDuE5j3yS4Y',
+            //     'accept': 'application/json'
+            //   }
             // })
 
-            console.log('response.data.result', response.data.result)
-            setNftList(response.data.result)
+            const get_url='https://testnets-api.opensea.io/api/v1/events?asset_contract_address='+ nftContractAddress +'&account_address=' + currentAccount +'&only_opensea=false&limit=20'
+            const response = await axios.get(get_url, {
+                headers: {
+                  'accept': 'application/json'
+                }
+            })
+
+            console.log('response.data.result', response.data.asset_events)
+            setNftList(response.data.asset_events)
         }
         if (currentAccount) {
             getNft();
@@ -170,7 +172,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
     }
 
     const handleChange = (e: any) => {
-        const selectedNft = nftList.find(item => item.token_id === e.target.value)
+        const selectedNft = nftList.find(item => item.asset.token_id === e.target.value)
         setNft(selectedNft)
     }
 
@@ -183,7 +185,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             const tx = await contract.addDAOIdentity(
                 1, // entityId
                 _identityCommitment,
-                nft.token_id,
+                nft.asset.token_id,
                 { gasLimit: 3000000 },
             )
         } catch (error) {
@@ -280,7 +282,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                     <FormControl>
                     <Select placeholder='Select NFT' onChange={handleChange}>
                         {nftList.map((nft, i) => (
-                            <option key={i} value={nft.token_id} >{nft.name} (token_id: {nft.token_id})</option>
+                            <option key={i} value={nft.asset.token_id} >token_id: {nft.asset.token_id}</option>
                         ))}
                     </Select>
                     </FormControl>
