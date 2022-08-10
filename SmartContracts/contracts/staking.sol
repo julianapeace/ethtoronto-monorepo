@@ -49,7 +49,7 @@ contract Staking is ERC721Holder, SemaphoreCore, SemaphoreGroups, Ownable {
             id
         );
         groupCommitments[entityId].push(identityCommitment);
-        commitmentNFTs[entityId] = id;
+        commitmentNFTs[identityCommitment] = id;
         _addMember(entityId, identityCommitment);
     }
 
