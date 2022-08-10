@@ -1,11 +1,10 @@
-import { Box, Button, Divider, Heading, HStack, Link, ListItem, OrderedList, Text, Tooltip, VStack, IconButton,
+import { Box, Button, Divider, Heading, HStack, Link, ListItem, OrderedList, Text, Tooltip, useToast, VStack, IconButton,
   Table,
   Thead,
   Tbody,
   Tr,
   Th,
   Td,
-  TableCaption,
   TableContainer } from "@chakra-ui/react"
 import { CopyIcon } from '@chakra-ui/icons'
 import { Identity } from "@semaphore-protocol/identity"
@@ -36,6 +35,17 @@ export default function IdentityStep({ onChange, onNextClick, onLog }: IdentityS
             onLog("Create your Semaphore identity 👆🏽")
         }
     }, [])
+    const toast = useToast()
+    const copyToClipboard = async function (value: string) {
+      navigator.clipboard.writeText(value)
+      toast({
+          title: 'Copied',
+          // description: "We've created your account for you.",
+          status: 'success',
+          duration: 6000,
+          isClosable: true,
+        })
+    }
 
     const createIdentity = useCallback(async () => {
         const identity = new Identity()
@@ -92,17 +102,17 @@ export default function IdentityStep({ onChange, onNextClick, onLog }: IdentityS
                           <Tr>
                             <Td>Trapdoor</Td>
                             <Td>{_identity.getTrapdoor().toString().substring(0, 30)}...</Td>
-                            <Td><IconButton aria-label='Trapdoor' icon={<CopyIcon />} onClick={() =>  navigator.clipboard.writeText(_identity.getTrapdoor())}/></Td>
+                            <Td><IconButton aria-label='Trapdoor' icon={<CopyIcon />} onClick={() =>  copyToClipboard(_identity.getTrapdoor())}/> </Td>
                           </Tr>
                           <Tr>
                             <Td>Nullifier</Td>
                             <Td>{_identity.getNullifier().toString().substring(0, 30)}...</Td>
-                            <Td><IconButton aria-label='Nullifier'  icon={<CopyIcon />} onClick={() =>  navigator.clipboard.writeText(_identity.getNullifier())}/></Td>
+                            <Td><IconButton aria-label='Nullifier'  icon={<CopyIcon />} onClick={() => copyToClipboard(_identity.getNullifier())}/></Td>
                           </Tr>
                           <Tr>
                             <Td>Commitment</Td>
                             <Td>{_identity.generateCommitment().toString().substring(0, 30)}...</Td>
-                            <Td><IconButton aria-label='Commitment'  icon={<CopyIcon />} onClick={() =>  navigator.clipboard.writeText(_identity.generateCommitment())}/></Td>
+                            <Td><IconButton aria-label='Commitment'  icon={<CopyIcon />} onClick={() =>  copyToClipboard(_identity.generateCommitment())}/></Td>
                           </Tr>
                         </Tbody>
                       </Table>

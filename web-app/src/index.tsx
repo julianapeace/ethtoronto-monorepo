@@ -26,14 +26,9 @@ function App() {
     const [_ercContract, setErcContract] = useState<Contract>()
     const [currentAccount, setCurrentAccount] = useState<string>()
     const [_event, setEvent] = useState<any>()
-<<<<<<< Updated upstream
     
     const contractAddress = '0x6caf636b6e3c09548E02225b0A6Ab2E0Bc2da1C7'
     const nftContractAddress = '0x7b6e19f2748b2ce25c7b2b2837dd9722d81943aa'
-=======
-
-    const contractAddress = '0x1D68aE7BA2782F7ffF506F3aa382d0c6581643D0'
->>>>>>> Stashed changes
 
     useEffect(() => {
         ;(async () => {
