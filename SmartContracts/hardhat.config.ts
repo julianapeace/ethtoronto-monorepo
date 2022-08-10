@@ -17,6 +17,10 @@ const config: HardhatUserConfig = {
     paths: ['@semaphore-protocol/contracts/verifiers/Verifier20.sol'],
   },
   networks: {
+    metis_testnet: {
+      url: "https://stardust.metis.io/?owner=588",
+      accounts:process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [], 
+    },
     goerli: {
       url: process.env.GOERLI_URL || '',
       accounts:

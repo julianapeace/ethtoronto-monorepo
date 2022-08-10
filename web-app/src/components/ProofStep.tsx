@@ -9,6 +9,7 @@ import IconAddCircleFill from "../icons/IconAddCircleFill"
 import IconRefreshLine from "../icons/IconRefreshLine"
 import Stepper from "./Stepper"
 import axios from "axios"
+import { render } from "react-dom"
 
 export type ProofStepProps = {
     currentAccount: string
@@ -23,12 +24,14 @@ export type ProofStepProps = {
 
 export default function ProofStep({ currentAccount, signer, ercContract, contract, event, identity, onPrevClick, onLog }: ProofStepProps) {
     const [_loading, setLoading] = useBoolean()
+    const [balance, setBalance] = useState<string>(0)
     const [_reviews, setReviews] = useState<any[]>([])
     const [nftList, setNftList] = useState<any[]>([])
     const [nft, setNft] = useState<any>()
     const [_identityCommitment, setIdentityCommitment] = useState<string>()
     const [_proof, setProof] = useState<any>()
     const [_proofCommitment, setProofCommitment] = useState<string[]>()
+    const [hasStaked,setStaked] = useState<any>()
 
     const getReviews = useCallback(async () => {
         if (!signer || !contract) {
@@ -65,13 +68,21 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
     useEffect(() => {
         const getApproved = async () => {
             if (!ercContract || !currentAccount || !contract) {
+                console.log("NO contract returning")
                 return;
             }
-            const approved = await ercContract.isApprovedForAll(currentAccount, contract.address) // owner, operator
-            console.log('approved---', approved);
-            if (!approved) {
-                const approve = await ercContract.setApprovalForAll(contract.address, true, { gasLimit: 3000000 })
-                console.log('approve---', approve);
+            const balance:number =await ercContract.balanceOf(currentAccount,1)
+            console.log(balance,"the balance")
+            if(balance>0){
+                setBalance(balance.toString())
+                const approved = await ercContract.isApprovedForAll(currentAccount, contract.address) // owner, operator
+                console.log('approved---', approved);
+                if (!approved) {
+                    const approve = await ercContract.setApprovalForAll(contract.address, true, { gasLimit: 3000000 })
+                    console.log('approve---', approve);
+                }
+            }else{
+                console.log('user has no nfts')
             }
         }
         getApproved()
@@ -85,10 +96,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             const externalNullifier = group.root
             const signal = "proposal_1"
             console.log('identity', identity)
-            const { proof, publicSignals } = await generateProof(identity, group, externalNullifier, signal, {
-                zkeyFilePath: "./semaphore_final.zkey",
-                wasmFilePath: "./semaphore.wasm"
-            })
+            const { proof, publicSignals } = await generateProof(identity, group, externalNullifier, signal)
             console.log('proof---', proof);
             // setProof(proof)
         }
@@ -97,25 +105,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
         }
     }, [identity, _proofCommitment])
 
-    useEffect(() => {
-        const getNft = async () => {
-            const get_url = 'https://deep-index.moralis.io/api/v2/'+ currentAccount +'/nft?chain=eth&format=decimal'
-            console.log(get_url)
-            const response = await axios.get(get_url, {
-              headers: {
-                'X-API-Key': 'Z2S84kzXfdIGBzqdn2avDI0U9P7kYAudQ5LgasjqzIslII2YebiPOWDuE5j3yS4Y',
-                'accept': 'application/json'
-              }
-            })
-            console.log('response.data.result', response.data.result)
-            setNftList(response.data.result)
-        }
-       
-        console.log("LOAD NFTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        if (currentAccount) {
-            getNft();
-        }
-    }, [currentAccount])
+  
 
     useEffect(() => {
         setIdentityCommitment(identity.generateCommitment().toString())
@@ -195,6 +185,8 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                 44,
                 { gasLimit: 3000000 },
             )
+            console.log(tx)
+            setStaked(true)
         } catch (error) {
             console.error(error)
         }
@@ -223,7 +215,19 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
         let r= await contract.verifyTest(utils.formatBytes32String(signal),nullifierHash,solidityProof,1,{gasLimit:4000000})
         console.log(r)
         console.log("RESULT")
+        const params = {
+            proof: solidityProof,
+            nullifierHash: proof.fullProof.publicSignals.nullifierHash.toString(),
+            entityId: proof.fullProof.publicSignals.externalNullifier,
+            challenge: 'something',
+          }
+        
+          console.log(params)
+          const hexified = new (Buffer as any).from(JSON.stringify(params)).toString('hex')
+          
+          console.log(hexified)
     }
+   
     return (
         <>
             <Heading as="h2" size="xl">
@@ -285,14 +289,19 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             <form>
                 <FormControl>
                 <FormLabel>NFT</FormLabel>
-                <Select placeholder='Select NFT' onChange={handleChange}>
-                    {nftList.map((nft, i) => (
-                        <option key={i} value={nft.token_id} >{nft.name}</option>
-                    ))}
-                </Select>
+                <FormLabel>Balance:{balance}</FormLabel>
                 </FormControl>
+                {hasStaked? (
+                
+                <Button colorScheme="primary" mt={5} onClick={testProof}>Generate Proof</Button>
+            ) : (
+               
                 <Button colorScheme="primary" mt={5} onClick={stakeNFT}>Stake NFT</Button>
-                <Button colorScheme="primary" mt={5} onClick={testProof}>Test Proof</Button>
+              
+
+            )}
+                
+               
             </form>
 
 

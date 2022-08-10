@@ -43,7 +43,7 @@ export default function IdentityStep({ onChange, onNextClick, onLog }: IdentityS
             </Heading>
 
             <Text pt="2" fontSize="md">
-                Users interact with the protocol using a Semaphore{" "}
+                Privacy preserving authentication using Semaphore{" "}
                 <Link href="https://semaphore.appliedzkp.org/docs/guides/identities" color="primary.500" isExternal>
                     identities
                 </Link>{" "}
