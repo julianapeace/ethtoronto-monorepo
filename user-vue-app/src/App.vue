@@ -89,10 +89,12 @@
 import { ZkIdentity } from '@zk-kit/identity'
 // import { Semaphore } from "@zk-kit/protocols"
 import HelloWorld from './components/HelloWorld.vue'
-import { abi } from './testStake.json'
+import { abi } from './Staking.json'
 import { ethers } from 'ethers'
 import axios from 'axios'
 import './assets/my.css';
+import { generateProof } from "@semaphore-protocol/proof"
+import { Group } from "@semaphore-protocol/group"
 
 
 export default {
@@ -144,8 +146,12 @@ export default {
       console.log('jm: identity', identity);
       const identityCommitment = identity.genIdentityCommitment()
       console.log('jm: identityCommitment', identityCommitment);
+
       this.identity_secret = identity
       this.identity_commit = identityCommitment
+
+      const group = new Group(20, BigInt(0))
+      group.addMember(identityCommitment)
       return identityCommitment
     },
     stakeNft: async function (item) {
@@ -188,7 +194,7 @@ export default {
 
         console.log('Connected Wallet Address: ', await signer.getAddress())
         const contract = new ethers.Contract(
-          '0x465f7Ac3Bd00948fE7Fb8939945dE1bFda62C873',
+          '0x1D68aE7BA2782F7ffF506F3aa382d0c6581643D0',
           abi,
           signer,
         )
@@ -217,10 +223,14 @@ export default {
         // setTimeout(() => {
         //     this.isLoading = false
         // }, 10 * 1000)
-        let r = await this.contract.addDAOIdentity(
-          1,
-          ethers.BigNumber.from(`0x${this.identity_commit.toString()}`),
-        )
+        // let r = await this.contract.addDAOIdentity(
+        //   1,
+        //   ethers.BigNumber.from(`0x${this.identity_commit.toString()}`),
+        // )
+
+        const provider = ethers.getDefaultProvider('rinkeby')
+        let r = await this.contract.addDAOIdentity(1, ethers.BigNumber.from(`0x${this.identity_commit.toString()}`), )
+
         this.joinState = true
         this.isLoading = false
 
@@ -236,51 +246,61 @@ export default {
 
     },
     createProof: async function () {
-      const circuitFilePath = 'http://localhost:8000/semaphore.wasm'
-      const zkeyFilePath = 'http://localhost:8000/semaphore_final.zkey'
-      let leaves = await this.contract.getGroupCommitments(1)
+      generateProof()
+      const externalNullifier = group.root
+      const signal = "proposal_1"
 
-      leaves = leaves.map((element) => element._hex.slice(2))
-      console.log(`leaves: ${leaves}`)
+      const fullProof = await generateProof(identity, group, externalNullifier, signal, {
+          zkeyFilePath: "./semaphore_final.zkey",
+          wasmFilePath: "./semaphore.wasm"
+      })
+      console.log('jm semaphore proof', fullProof)
 
-      const storageArtifacts = {
-        leaves: leaves,
-        depth: 20,
-        leavesPerNode: 2,
-      }
+      // const circuitFilePath = 'http://localhost:8000/semaphore.wasm'
+      // const zkeyFilePath = 'http://localhost:8000/semaphore_final.zkey'
+      // let leaves = await this.contract.getGroupCommitments(1)
+      //
+      // leaves = leaves.map((element) => element._hex.slice(2))
+      // console.log(`leaves: ${leaves}`)
+      //
+      // const storageArtifacts = {
+      //   leaves: leaves,
+      //   depth: 20,
+      //   leavesPerNode: 2,
+      // }
 
-      try {
-        let proof = await this.client.semaphoreProof(
-          '1',
-          'something',
-          circuitFilePath,
-          zkeyFilePath,
-          storageArtifacts,
-        )
-
-        proof = JSON.parse(proof)
-        console.log('semaphore proof', proof.fullProof)
-        const params = {
-          proof: proof.solidityProof,
-          nullifierHash: proof.fullProof.publicSignals.nullifierHash.toString(),
-          entityId: proof.fullProof.publicSignals.externalNullifier,
-          challenge: 'something',
-        }
-
-        console.log(params)
-        const hexified = new Buffer.from(JSON.stringify(params)).toString('hex')
-        this.proof = hexified
-        console.log(hexified)
-
-        this.proof = '7b2270726f6f66223a5b2236383438363639303831353333343839393935323837313930313032373735363831363331393034343436313339333033353438343231343931303832333431393531353531313935343530222c2233303631393939383136373738333433353332303837313334343239373339363636393138303937303735323034313432373338393330363736373430383433393131333836363234363632222c223132373838333036383633323737323934373736333431363039343634313335393436363435303733383033383837323833393731353534323433333134393832313233333235313038343538222c223133363736303932383938343631353134393330373132313033373338353731383134393437353035393537313730383332383534323939383139343439383131393339393435383532353430222c2237353435353533353834393839383931383037303734373935343734353737373335333135323734393232353236323136383537313132333137393130383137373937313138333533363038222c223230333436313735333038333536393635303636333832373239343234343135393631303138383135353736343234353539353931363038363235373337303035373933343435303436353732222c223230393533373733393533383137353333393137323432343230323430323739383432303338373235393133363437383737323730393031383736303433383938353333353738363033333632222c223131343236333535333831303833343631353934383038333538343237323439363633373332373437313732393934343030303138353830333638323231353339323031303237353034343831225d2c226e756c6c696669657248617368223a2239373433333534393632373136323530373139333238353736393235343834313839333733383232363739323237313338393339303532313937343733323335313831373933323038343032222c22656e746974794964223a2231222c226368616c6c656e6765223a226861686168616861227d'
-        this.readMoreActivated = false
+      // try {
+      //   let proof = await this.client.semaphoreProof(
+      //     '1',
+      //     'something',
+      //     circuitFilePath,
+      //     zkeyFilePath,
+      //     storageArtifacts,
+      //   )
+      //
+      //   proof = JSON.parse(proof)
+      //   console.log('semaphore proof', proof.fullProof)
+      //   const params = {
+      //     proof: proof.solidityProof,
+      //     nullifierHash: proof.fullProof.publicSignals.nullifierHash.toString(),
+      //     entityId: proof.fullProof.publicSignals.externalNullifier,
+      //     challenge: 'something',
+      //   }
+      //
+      //   console.log(params)
+      //   const hexified = new Buffer.from(JSON.stringify(params)).toString('hex')
+      //   this.proof = hexified
+      //   console.log(hexified)
+      //
+      //   this.proof = '7b2270726f6f66223a5b2236383438363639303831353333343839393935323837313930313032373735363831363331393034343436313339333033353438343231343931303832333431393531353531313935343530222c2233303631393939383136373738333433353332303837313334343239373339363636393138303937303735323034313432373338393330363736373430383433393131333836363234363632222c223132373838333036383633323737323934373736333431363039343634313335393436363435303733383033383837323833393731353534323433333134393832313233333235313038343538222c223133363736303932383938343631353134393330373132313033373338353731383134393437353035393537313730383332383534323939383139343439383131393339393435383532353430222c2237353435353533353834393839383931383037303734373935343734353737373335333135323734393232353236323136383537313132333137393130383137373937313138333533363038222c223230333436313735333038333536393635303636333832373239343234343135393631303138383135353736343234353539353931363038363235373337303035373933343435303436353732222c223230393533373733393533383137353333393137323432343230323430323739383432303338373235393133363437383737323730393031383736303433383938353333353738363033333632222c223131343236333535333831303833343631353934383038333538343237323439363633373332373437313732393934343030303138353830333638323231353339323031303237353034343831225d2c226e756c6c696669657248617368223a2239373433333534393632373136323530373139333238353736393235343834313839333733383232363739323237313338393339303532313937343733323335313831373933323038343032222c22656e746974794964223a2231222c226368616c6c656e6765223a226861686168616861227d'
+      //   this.readMoreActivated = false
         this.$confetti.start();
         setTimeout(() => {
           this.$confetti.stop();
        }, 5000);
-      } catch (e) {
-        console.error(e)
-      }
+      // } catch (e) {
+      //   console.error(e)
+      // }
     },
   },
 }

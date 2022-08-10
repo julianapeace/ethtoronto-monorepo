@@ -8,13 +8,15 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@semaphore-protocol/group": "^2.0.0",
+    "@semaphore-protocol/proof": "^2.2.0",
     "@zk-kit/identity": "^1.4.1",
     "@zk-kit/protocols": "^1.8.0",
     "axios": "^0.26.1",
     "bigint-conversion": "^2.2.1",
     "buefy": "^0.9.19",
     "core-js": "^3.6.5",
-    "ethers": "^5.6.0",
+    "ethers": "^5.6.9",
     "http-server": "^14.1.0",
     "vue": "^2.6.11",
     "vue-confetti": "^2.3.0"

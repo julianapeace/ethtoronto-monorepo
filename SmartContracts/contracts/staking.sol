@@ -8,7 +8,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-contract Staking is ERC721Holder,SemaphoreCore, SemaphoreGroups, Ownable {
+
+contract Staking is ERC721Holder, SemaphoreCore, SemaphoreGroups, Ownable {
     mapping(uint256 => uint256) public groupDeposits;
     mapping(uint256 => uint256[]) public groupCommitments;
     mapping(address => uint256) private entities;
@@ -17,25 +18,14 @@ contract Staking is ERC721Holder,SemaphoreCore, SemaphoreGroups, Ownable {
     
     IVerifier verifier;
 
-   
     address public asset;
-    
-    
 
-    constructor(
-        address _verifier,        
-        address nft
-    ) {
+    constructor(address _verifier, address nft) {
         verifier = IVerifier(_verifier);
-        
-       
-        createEntity(1,msg.sender,nft);
-      
+
+        createEntity(1, msg.sender, nft);
     }
 
-    
-
-    
     function createEntity(
         uint256 entityId,
         address editor,
@@ -45,7 +35,6 @@ contract Staking is ERC721Holder,SemaphoreCore, SemaphoreGroups, Ownable {
 
         entities[editor] = entityId;
         membershipTokens[entityId] = token;
-      
     }
 
     /// @dev See {ISemaphoreWhistleblowing-addWhistleblower}.
@@ -63,6 +52,7 @@ contract Staking is ERC721Holder,SemaphoreCore, SemaphoreGroups, Ownable {
         commitmentNFTs[entityId] = id;
         _addMember(entityId, identityCommitment);
     }
+
     function addTestCommitment(uint256 entity, uint256 identityCommitment)
         public
     {
@@ -79,14 +69,12 @@ contract Staking is ERC721Holder,SemaphoreCore, SemaphoreGroups, Ownable {
         return (groupCommitments[id], getRoot(id));
     }
 
-   
-
     function verifyTest(
         bytes32 _sig,
         uint256 _nullifierHash,
         uint256[8] calldata _proof,
         uint256 entityId
-    ) public view returns(bool){
+    ) public view returns (bool) {
         uint256 root = getRoot(entityId);
 
         _verifyProof(_sig, root, _nullifierHash, root, _proof, verifier);
