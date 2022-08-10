@@ -89,18 +89,6 @@ function App() {
                 {currentAccount && (<Stack mt={5}>
                     {_step === 1 ? (
                         <IdentityStep onChange={setIdentity} onLog={setLogs} onNextClick={() => setStep(2)} />
-                    ) : _step === 3 ? (
-                        <GroupStep
-                            signer={_signer}
-                            contract={_contract}
-                            identity={_identity as Identity}
-                            onPrevClick={() => setStep(1)}
-                            onSelect={(event) => {
-                                setEvent(event)
-                                setStep(3)
-                            }}
-                            onLog={setLogs}
-                        />
                     ) : (
                         <ProofStep
                             currentAccount={currentAccount}
@@ -109,7 +97,7 @@ function App() {
                             ercContract={_ercContract}
                             identity={_identity as Identity}
                             event={_event}
-                            onPrevClick={() => setStep(2)}
+                            onPrevClick={() => setStep(1)}
                             onLog={setLogs}
                         />
                     )}
