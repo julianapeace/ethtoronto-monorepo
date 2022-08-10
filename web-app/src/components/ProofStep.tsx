@@ -2,7 +2,7 @@ import { Box, Button, Divider, Heading, HStack, Link, Text, useBoolean, VStack, 
 import { Group } from "@semaphore-protocol/group"
 import { Identity } from "@semaphore-protocol/identity"
 import { generateProof, packToSolidityProof } from "@semaphore-protocol/proof"
-import { Contract, Signer } from "ethers"
+import { Contract, Signer,utils } from "ethers"
 import { parseBytes32String } from "ethers/lib/utils"
 import { useCallback, useEffect, useState } from "react"
 import IconAddCircleFill from "../icons/IconAddCircleFill"
@@ -43,7 +43,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
     // useEffect(() => {
     //     getReviews().then(setReviews)
     // }, [signer, contract, event])
-
+  
     useEffect(() => {
         const getAllCommitments = async () => {
             if (!contract || !identity) {
@@ -93,13 +93,14 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             // setProof(proof)
         }
         if (identity && _proofCommitment) {
-            getProof()
+            //getProof()
         }
     }, [identity, _proofCommitment])
 
     useEffect(() => {
         const getNft = async () => {
             const get_url = 'https://deep-index.moralis.io/api/v2/'+ currentAccount +'/nft?chain=eth&format=decimal'
+            console.log(get_url)
             const response = await axios.get(get_url, {
               headers: {
                 'X-API-Key': 'Z2S84kzXfdIGBzqdn2avDI0U9P7kYAudQ5LgasjqzIslII2YebiPOWDuE5j3yS4Y',
@@ -109,6 +110,8 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             console.log('response.data.result', response.data.result)
             setNftList(response.data.result)
         }
+       
+        console.log("LOAD NFTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         if (currentAccount) {
             getNft();
         }
@@ -189,14 +192,38 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             const tx = await contract.addDAOIdentity(
                 1, // entityId
                 _identityCommitment,
-                nft.token_id,
+                44,
                 { gasLimit: 3000000 },
             )
         } catch (error) {
             console.error(error)
         }
     }
-
+    const testProof = async () => {
+        if (!contract) {
+            return;
+        }
+        const group = new Group(20, BigInt(0))
+        console.log('_proofCommitment', _proofCommitment)
+        group.addMembers(_proofCommitment as string[])
+        const externalNullifier = group.root
+        const signal = "proposal_1"
+        console.log('identity', identity)
+        const { proof, publicSignals } = await generateProof(identity, group, externalNullifier, signal)
+        console.log('proof---', proof);
+        const solidityProof = packToSolidityProof(proof)
+          
+            
+        console.log(publicSignals)
+        const nullifierHash=publicSignals.nullifierHash
+     
+           
+        console.log(nullifierHash)
+        console.log(solidityProof)
+        let r= await contract.verifyTest(utils.formatBytes32String(signal),nullifierHash,solidityProof,1,{gasLimit:4000000})
+        console.log(r)
+        console.log("RESULT")
+    }
     return (
         <>
             <Heading as="h2" size="xl">
@@ -265,6 +292,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                 </Select>
                 </FormControl>
                 <Button colorScheme="primary" mt={5} onClick={stakeNFT}>Stake NFT</Button>
+                <Button colorScheme="primary" mt={5} onClick={testProof}>Test Proof</Button>
             </form>
 
 
