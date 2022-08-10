@@ -29,7 +29,7 @@ function App() {
     const [loading, setLoading] = useState<boolean>(false)
     
     const contractAddress = '0x6caf636b6e3c09548E02225b0A6Ab2E0Bc2da1C7'
-    const nftContractAddress = '0x7b6e19f2748b2ce25c7b2b2837dd9722d81943aa'
+    const nftContractAddress = '0xf4682b6e180d5d2012244a784779a426ef350a95'
 
     useEffect(() => {
         ;(async () => {
