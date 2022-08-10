@@ -1,19 +1,16 @@
-import { ChakraProvider, Container, HStack, Spinner, Stack, Text, Button } from "@chakra-ui/react"
+import { ChakraProvider, Container, HStack, Spinner, Stack, Text, Button, Tooltip } from "@chakra-ui/react"
 import "@fontsource/inter/400.css"
 import detectEthereumProvider from "@metamask/detect-provider"
 import { Identity } from "@semaphore-protocol/identity"
 import { Contract, providers, Signer } from "ethers"
-import axios from 'axios'
-import { hexlify } from "ethers/lib/utils"
-import { ZkIdentity } from '@zk-kit/identity'
 import { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
 import Events from "./contract/Staking.json"
 import ERC1155 from "./contract/IERC1155.json"
 import theme from "../styles"
-import GroupStep from "./components/GroupStep"
 import IdentityStep from "./components/IdentityStep"
 import ProofStep from "./components/ProofStep"
+import "./style.css"
 
 function App() {
     const [_logs, setLogs] = useState<string>("")
@@ -24,6 +21,7 @@ function App() {
     const [_ercContract, setErcContract] = useState<Contract>()
     const [currentAccount, setCurrentAccount] = useState<string>()
     const [_event, setEvent] = useState<any>()
+    const [loading, setLoading] = useState<boolean>(false)
     
     const contractAddress = '0x5c96aB6514E7d78537e7690ebC3a78966a86534c'
     //const contractAddress='0xfEC536b1Fe0cFcfb0CBF91FF59Bf4D8D991Cbcf8'
@@ -67,6 +65,7 @@ function App() {
     }, [])
 
     const connectWallet = async () => {
+        setLoading(true)
         try {
           const ethereum = (await detectEthereumProvider()) as any
     
@@ -86,23 +85,15 @@ function App() {
 
     return (
         <>
-            <Container maxW="lg" flex="1" display="flex" alignItems="center" centerContent>
-                {!currentAccount && <Button mt={5} onClick={connectWallet} colorScheme='blue'>Connect</Button>}
+            <Container flex="1" display="flex" alignItems="center" centerContent mb={5}>
+                <header style={{marginBottom: '1rem'}}>
+                    <h1>ZK-NFT ✨</h1>
+                    {currentAccount && <Tooltip placement='right' hasArrow label='Private Trapdoor' bg='gray.500'><p>🟢  { currentAccount }</p></Tooltip>}
+                </header>
+                {!currentAccount && <Button mt={5} onClick={connectWallet} colorScheme="primary" isLoading={loading}>Connect Wallet</Button>}
                 {currentAccount && (<Stack mt={5}>
                     {_step === 1 ? (
                         <IdentityStep onChange={setIdentity} onLog={setLogs} onNextClick={() => setStep(2)} />
-                    ) : _step === 3 ? (
-                        <GroupStep
-                            signer={_signer}
-                            contract={_contract}
-                            identity={_identity as Identity}
-                            onPrevClick={() => setStep(1)}
-                            onSelect={(event) => {
-                                setEvent(event)
-                                setStep(3)
-                            }}
-                            onLog={setLogs}
-                        />
                     ) : (
                         <ProofStep
                             currentAccount={currentAccount}
@@ -111,7 +102,7 @@ function App() {
                             ercContract={_ercContract}
                             identity={_identity as Identity}
                             event={_event}
-                            onPrevClick={() => setStep(2)}
+                            onPrevClick={() => setStep(1)}
                             onLog={setLogs}
                         />
                     )}

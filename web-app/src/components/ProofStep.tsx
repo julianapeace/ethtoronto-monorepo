@@ -1,4 +1,4 @@
-import { Box, Button, Divider, Heading, HStack, Link, Text, useBoolean, VStack, FormControl, FormLabel, Select, InputGroup } from "@chakra-ui/react"
+import { Box, Button, Divider, Heading, HStack, Link, Text, useBoolean, VStack, FormControl, FormLabel, Select, InputGroup, useToast } from "@chakra-ui/react"
 import { Group } from "@semaphore-protocol/group"
 import { Identity } from "@semaphore-protocol/identity"
 import { generateProof, packToSolidityProof } from "@semaphore-protocol/proof"
@@ -23,7 +23,7 @@ export type ProofStepProps = {
 }
 
 export default function ProofStep({ currentAccount, signer, ercContract, contract, event, identity, onPrevClick, onLog }: ProofStepProps) {
-    const [_loading, setLoading] = useBoolean()
+    // const [_loading, setLoading] = useBoolean()
     const [balance, setBalance] = useState<string>(0)
     const [_reviews, setReviews] = useState<any[]>([])
     const [nftList, setNftList] = useState<any[]>([])
@@ -32,22 +32,25 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
     const [_proof, setProof] = useState<any>()
     const [_proofCommitment, setProofCommitment] = useState<string[]>()
     const [hasStaked,setStaked] = useState<any>()
-
+    const [loading, setLoading] = useState<any>({
+        stake: false,
+        proof: false,
+        verify: false
+    })
     const [displayProof,setDisplay]= useState<string>()
-    const getReviews = useCallback(async () => {
-        if (!signer || !contract) {
-            return []
-        }
 
-        const reviews = await contract.queryFilter(contract.filters.ReviewPosted(event.groupId))
+    const toast = useToast()
+    const copyToClipboard = async function (value: string) {
+        navigator.clipboard.writeText(value)
+        toast({
+            title: 'Copied',
+            // description: "We've created your account for you.",
+            status: 'success',
+            duration: 6000,
+            isClosable: true,
+          })
+      }
 
-        return reviews.map((r) => parseBytes32String(r.args![1]))
-    }, [signer, contract, event])
-
-    // useEffect(() => {
-    //     getReviews().then(setReviews)
-    // }, [signer, contract, event])
-  
     useEffect(() => {
         const getAllCommitments = async () => {
             if (!contract || !identity) {
@@ -58,7 +61,6 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             const commitments = await contract.getTreeInfo(1)
             console.log('commitments', commitments[0]);
             const commitmentData = commitments[0].map((c: any) => {
-                
                 return c.toString()
             })
             commitmentData.forEach((item:any)=>{
@@ -72,7 +74,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             setProofCommitment(commitmentData as string[])
         }
         getAllCommitments()
-    }, [contract, identity,hasStaked])
+    }, [contract, identity, hasStaked])
 
     useEffect(() => {
         const getApproved = async () => {
@@ -82,7 +84,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             }
             const balance:number =await ercContract.balanceOf(currentAccount,1)
             console.log(balance,"the balance")
-            if(balance>0){
+            if (balance > 0){
                 setBalance(balance.toString())
                 const approved = await ercContract.isApprovedForAll(currentAccount, contract.address) // owner, operator
                 console.log('approved---', approved);
@@ -90,86 +92,17 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                     const approve = await ercContract.setApprovalForAll(contract.address, true, { gasLimit: 3000000 })
                     console.log('approve---', approve);
                 }
-            }else{
+            } else {
                 console.log('user has no nfts')
             }
         }
         getApproved()
-    }, [ercContract, contract, currentAccount,hasStaked])
-
-    useEffect(() => {
-        const getProof = async () => {
-            const group = new Group(20, BigInt(0))
-            console.log('_proofCommitment', _proofCommitment)
-            group.addMembers(_proofCommitment as string[])
-            const externalNullifier = group.root
-            const signal = "proposal_1"
-            console.log('identity', identity)
-            const { proof, publicSignals } = await generateProof(identity, group, externalNullifier, signal)
-            console.log('proof---', proof);
-            // setProof(proof)
-        }
-        if (identity && _proofCommitment) {
-            //getProof()
-        }
-    }, [identity, _proofCommitment])
-
+    }, [ercContract, contract, currentAccount, hasStaked])
   
 
     useEffect(() => {
         setIdentityCommitment(identity.generateCommitment().toString())
     }, [identity])
-
-    const postReview = useCallback(async () => {
-        if (contract && identity) {
-            const review = prompt("Please enter your review:")
-
-            if (review) {
-                setLoading.on()
-                onLog(`Posting your anonymous review...`)
-
-                try {
-                    const members = await contract.queryFilter(contract.filters.MemberAdded(event.groupId))
-                    const group = new Group()
-
-                    group.addMembers(members.map((m) => m.args![1].toString()))
-
-                    const { proof, publicSignals } = await generateProof(
-                        identity,
-                        group,
-                        event.groupId.toString(),
-                        review
-                    )
-                    const solidityProof = packToSolidityProof(proof)
-
-                    const { status } = await fetch(`${process.env.RELAY_URL}/post-review`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            review,
-                            nullifierHash: publicSignals.nullifierHash,
-                            groupId: event.groupId.toString(),
-                            solidityProof
-                        })
-                    })
-
-                    if (status === 200) {
-                        setReviews((v) => [...v, review])
-
-                        onLog(`Your review was posted 🎉`)
-                    } else {
-                        onLog("Some error occurred, please try again!")
-                    }
-                } catch (error) {
-                    console.error(error)
-
-                    onLog("Some error occurred, please try again!")
-                } finally {
-                    setLoading.off()
-                }
-            }
-        }
-    }, [contract, identity])
 
     const verify = async() => {
         if (contract) {
@@ -193,13 +126,14 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                 _identityCommitment,                
                 { gasLimit: 3000000 },
             )
-            tx=await tx.wait()
+            tx = await tx.wait()
             console.log(tx)
             setStaked(true)
         } catch (error) {
             console.error(error)
         }
     }
+
     const testProof = async () => {
         if (!contract) {
             return;
@@ -221,7 +155,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
            
         console.log(nullifierHash)
         console.log(solidityProof)
-        let r= await contract.verifyTest(utils.formatBytes32String(signal),nullifierHash,solidityProof,1,{gasLimit:4000000})
+        let r = await contract.verifyTest(utils.formatBytes32String(signal),nullifierHash,solidityProof,1,{gasLimit:4000000})
         console.log(r)
         console.log("RESULT")
         const params = {
@@ -231,11 +165,11 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             challenge: 'something',
           }
         
-          console.log(params)
-          const hexified = new (Buffer as any).from(JSON.stringify(params)).toString('hex')
-          
-          console.log(hexified)
-          setDisplay(hexified)
+        console.log(params)
+        const hexified = new (Buffer as any).from(JSON.stringify(params)).toString('hex')
+        
+        console.log(hexified)
+        setDisplay(hexified)
     }
    
     return (
@@ -249,76 +183,27 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                 <Link href="https://semaphore.appliedzkp.org/docs/guides/proofs" color="primary.500" isExternal>
                     prove
                 </Link>{" "}
-                that they are part of a group and that they are generating their own signals. Signals could be anonymous
-                votes, leaks, or reviews.
+                that they are part of a group and that they are generating their own signals.
             </Text>
 
             <Divider pt="5" borderColor="gray.500" />
-
-            {/* <HStack pt="5" justify="space-between">
-                <Text fontWeight="bold" fontSize="lg">
-                    <b>{event.eventName}</b> ({event.members.length}) 
-                </Text>
-                <Button
-                    leftIcon={<IconRefreshLine />}
-                    variant="link"
-                    color="text.700"
-                    onClick={() => getReviews().then(setReviews)}
-                >
-                    Refresh
-                </Button>
-            </HStack>
-
-            <Box py="5">
-                <Button
-                    w="100%"
-                    fontWeight="bold"
-                    justifyContent="left"
-                    colorScheme="primary"
-                    px="4"
-                    onClick={postReview}
-                    isDisabled={_loading}
-                    leftIcon={<IconAddCircleFill />}
-                >
-                    Generate a signal
-                </Button>
-            </Box>
-
-            {_reviews.length > 0 && (
-                <VStack spacing="3" align="left">
-                    {_reviews.map((review, i) => (
-                        <HStack key={i} p="3" borderWidth={1}>
-                            <Text>{review}</Text>
-                        </HStack>
-                    ))}
-                </VStack>
-            )} */}
-
-            <Button onClick={verify}>Verify</Button>
 
             <form>
                 <FormControl>
                 <FormLabel>NFT</FormLabel>
                 <FormLabel>Balance:{balance}</FormLabel>
                 </FormControl>
-                {hasStaked? (
-                
-                <Button colorScheme="primary" mt={5} onClick={testProof}>Generate Proof</Button>
-                
-            ) : (
-               
-                <Button colorScheme="primary" mt={5} onClick={stakeNFT}>Stake NFT</Button>
-              
-
-            )}
-                
-               
+                {hasStaked ? (
+                    <Button colorScheme="primary" mt={5} onClick={testProof}>Generate Proof</Button>   
+                ) : (
+                    <Button colorScheme="primary" mt={5} onClick={stakeNFT}>Stake NFT</Button>
+                )}
             </form>
 
             <p style={{ wordWrap: "break-word",maxWidth:"1000px"}} >{displayProof}</p>
             <Divider pt="4" borderColor="gray" />
 
-            <Stepper step={3} onPrevClick={onPrevClick} />
+            <Stepper step={2} onPrevClick={onPrevClick} />
         </>
     )
 }
