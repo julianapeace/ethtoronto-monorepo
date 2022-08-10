@@ -9,6 +9,7 @@ import { ZkIdentity } from '@zk-kit/identity'
 import { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
 import Events from "./contract/Staking.json"
+import ERC721 from "./contract/IERC721.json"
 import theme from "../styles"
 import GroupStep from "./components/GroupStep"
 import IdentityStep from "./components/IdentityStep"
@@ -20,10 +21,12 @@ function App() {
     const [_identity, setIdentity] = useState<Identity>()
     const [_signer, setSigner] = useState<Signer>()
     const [_contract, setContract] = useState<Contract>()
+    const [_ercContract, setErcContract] = useState<Contract>()
     const [currentAccount, setCurrentAccount] = useState<string>()
     const [_event, setEvent] = useState<any>()
     
-    const contractAddress = '0x1D68aE7BA2782F7ffF506F3aa382d0c6581643D0'
+    const contractAddress = '0x6caf636b6e3c09548E02225b0A6Ab2E0Bc2da1C7'
+    const nftContractAddress = '0x7b6e19f2748b2ce25c7b2b2837dd9722d81943aa'
 
     useEffect(() => {
         ;(async () => {
@@ -44,6 +47,7 @@ function App() {
             if (accounts[0]) {
                 setSigner(ethersProvider.getSigner())
                 setContract(new Contract(contractAddress!, Events.abi, ethersProvider.getSigner()))
+                setErcContract(new Contract(nftContractAddress!, ERC721.abi, ethersProvider.getSigner()))
                 console.log('accounts', accounts[0])
                 setCurrentAccount(accounts[0])
             }
@@ -52,6 +56,7 @@ function App() {
                 if (newAccounts.length !== 0) {
                     setSigner(ethersProvider.getSigner())
                     setContract(new Contract(contractAddress!, Events.abi, ethersProvider.getSigner()))
+                    setErcContract(new Contract(nftContractAddress!, ERC721.abi, ethersProvider.getSigner()))
                 } else {
                     setSigner(undefined)
                 }
@@ -101,6 +106,7 @@ function App() {
                             currentAccount={currentAccount}
                             signer={_signer}
                             contract={_contract}
+                            ercContract={_ercContract}
                             identity={_identity as Identity}
                             event={_event}
                             onPrevClick={() => setStep(2)}

@@ -13,6 +13,7 @@ import axios from "axios"
 export type ProofStepProps = {
     currentAccount: string
     signer?: Signer
+    ercContract?: Contract
     contract?: Contract
     identity: Identity
     event: any
@@ -20,14 +21,14 @@ export type ProofStepProps = {
     onLog: (message: string) => void
 }
 
-export default function ProofStep({ currentAccount, signer, contract, event, identity, onPrevClick, onLog }: ProofStepProps) {
+export default function ProofStep({ currentAccount, signer, ercContract, contract, event, identity, onPrevClick, onLog }: ProofStepProps) {
     const [_loading, setLoading] = useBoolean()
     const [_reviews, setReviews] = useState<any[]>([])
     const [nftList, setNftList] = useState<any[]>([])
     const [nft, setNft] = useState<any>()
     const [_identityCommitment, setIdentityCommitment] = useState<string>()
     const [_proof, setProof] = useState<any>()
-    const [_proofCommitment, setProofCommitment] = useState<string>()
+    const [_proofCommitment, setProofCommitment] = useState<string[]>()
 
     const getReviews = useCallback(async () => {
         if (!signer || !contract) {
@@ -39,38 +40,62 @@ export default function ProofStep({ currentAccount, signer, contract, event, ide
         return reviews.map((r) => parseBytes32String(r.args![1]))
     }, [signer, contract, event])
 
-    useEffect(() => {
-        // getReviews().then(setReviews)
-    }, [signer, contract, event])
+    // useEffect(() => {
+    //     getReviews().then(setReviews)
+    // }, [signer, contract, event])
 
     useEffect(() => {
         const getAllCommitments = async () => {
-            if (!contract) {
+            if (!contract || !identity) {
                 return
             }
+            console.log('contract', contract)
+            console.log('iden', identity)
             const commitments = await contract.getTreeInfo(1)
-            console.log('commitments', commitments);
+            console.log('commitments', commitments[0]);
+            const commitmentData = commitments[0].map((c: any) => {
+                return c.toString()
+            })
+            console.log('commitmentData', commitmentData);
+            setProofCommitment(commitmentData as string[])
         }
         getAllCommitments()
-    }, [contract])
+    }, [contract, identity])
 
-    // useEffect(() => {
-    //     const getProof = async () => {
-    //         const group = new Group(20, BigInt(0))
-    //         const externalNullifier = group.root
-    //         const signal = "proposal_1"
-    //         console.log('identity', identity)
-    //         const { proof, publicSignals } = await generateProof(identity, group, externalNullifier, signal, {
-    //             zkeyFilePath: "./semaphore_final.zkey",
-    //             wasmFilePath: "./semaphore.wasm"
-    //         })
-    //         console.log('proof---', proof);
-    //         setProof(proof)
-    //     }
-    //     if (identity) {
-    //         getProof()
-    //     }
-    // }, [identity])
+    useEffect(() => {
+        const getApproved = async () => {
+            if (!ercContract || !currentAccount || !contract) {
+                return;
+            }
+            const approved = await ercContract.isApprovedForAll(currentAccount, contract.address) // owner, operator
+            console.log('approved---', approved);
+            if (!approved) {
+                const approve = await ercContract.setApprovalForAll(contract.address, true, { gasLimit: 3000000 })
+                console.log('approve---', approve);
+            }
+        }
+        getApproved()
+    }, [ercContract, contract, currentAccount])
+
+    useEffect(() => {
+        const getProof = async () => {
+            const group = new Group(20, BigInt(0))
+            console.log('_proofCommitment', _proofCommitment)
+            group.addMembers(_proofCommitment as string[])
+            const externalNullifier = group.root
+            const signal = "proposal_1"
+            console.log('identity', identity)
+            const { proof, publicSignals } = await generateProof(identity, group, externalNullifier, signal, {
+                zkeyFilePath: "./semaphore_final.zkey",
+                wasmFilePath: "./semaphore.wasm"
+            })
+            console.log('proof---', proof);
+            // setProof(proof)
+        }
+        if (identity && _proofCommitment) {
+            getProof()
+        }
+    }, [identity, _proofCommitment])
 
     useEffect(() => {
         const getNft = async () => {
@@ -144,10 +169,16 @@ export default function ProofStep({ currentAccount, signer, contract, event, ide
         }
     }, [contract, identity])
 
+    const verify = async() => {
+        if (contract) {
+            // const verified = await contract.verifyTest(signer, _nullifierHash, _proof, 1)
+        }
+    }
+
     const handleChange = (e: any) => {
         const selectedNft = nftList.find(item => item.token_id === e.target.value)
         setNft(selectedNft)
-    } 
+    }
 
     const stakeNFT = async() => {
         console.log('selectedNft', nft)
@@ -159,6 +190,7 @@ export default function ProofStep({ currentAccount, signer, contract, event, ide
                 1, // entityId
                 _identityCommitment,
                 nft.token_id,
+                { gasLimit: 3000000 },
             )
         } catch (error) {
             console.error(error)
@@ -220,6 +252,8 @@ export default function ProofStep({ currentAccount, signer, contract, event, ide
                     ))}
                 </VStack>
             )} */}
+
+            <Button onClick={verify}>Verify</Button>
 
             <form>
                 <FormControl>
