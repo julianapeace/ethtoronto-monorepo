@@ -9,7 +9,7 @@ import { ZkIdentity } from '@zk-kit/identity'
 import { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
 import Events from "./contract/Staking.json"
-import ERC721 from "./contract/IERC721.json"
+import ERC721 from "./contract/ERC721-mock-abi.json"
 import theme from "../styles"
 import GroupStep from "./components/GroupStep"
 import IdentityStep from "./components/IdentityStep"
@@ -29,7 +29,8 @@ function App() {
     const [loading, setLoading] = useState<boolean>(false)
 
     const contractAddress = '0x6caf636b6e3c09548E02225b0A6Ab2E0Bc2da1C7'
-    const nftContractAddress = '0x7b6e19f2748b2ce25c7b2b2837dd9722d81943aa'
+    // const nftContractAddress = '0x7b6e19f2748b2ce25c7b2b2837dd9722d81943aa'
+    const nftContractAddress = '0xf4682b6e180d5d2012244a784779a426ef350a95' // with metadata on rinkeby
 
     useEffect(() => {
         ;(async () => {

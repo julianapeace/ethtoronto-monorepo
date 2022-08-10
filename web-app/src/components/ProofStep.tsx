@@ -10,6 +10,8 @@ import IconRefreshLine from "../icons/IconRefreshLine"
 import Stepper from "./Stepper"
 import axios from "axios"
 
+const nftContractAddress = '0xf4682b6e180d5d2012244a784779a426ef350a95' // with metadata on rinkeby
+
 export type ProofStepProps = {
     currentAccount: string
     signer?: Signer
@@ -85,20 +87,20 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
 
     useEffect(() => {
         const getNft = async () => {
-            const get_url = 'https://deep-index.moralis.io/api/v2/'+ currentAccount +'/nft?chain=eth&format=decimal'
-            const response = await axios.get(get_url, {
-              headers: {
-                'X-API-Key': 'Z2S84kzXfdIGBzqdn2avDI0U9P7kYAudQ5LgasjqzIslII2YebiPOWDuE5j3yS4Y',
-                'accept': 'application/json'
-              }
-            })
-
-            // const get_url='https://testnets-api.opensea.io/api/v1/events?asset_contract_address=0x7b6e19f2748b2ce25c7b2b2837dd9722d81943aa&account_address=' + currentAccount +'&only_opensea=false&limit=20'
+            // const get_url = 'https://deep-index.moralis.io/api/v2/'+ currentAccount +'/nft?chain=eth&format=decimal'
             // const response = await axios.get(get_url, {
-            //     headers: {
-            //       'accept': 'application/json'
-            //     }
+            //   headers: {
+            //     'X-API-Key': 'Z2S84kzXfdIGBzqdn2avDI0U9P7kYAudQ5LgasjqzIslII2YebiPOWDuE5j3yS4Y',
+            //     'accept': 'application/json'
+            //   }
             // })
+
+            const get_url='https://testnets-api.opensea.io/api/v1/events?asset_contract_address='+ nftContractAddress +'&account_address=' + currentAccount +'&only_opensea=false&limit=20'
+            const response = await axios.get(get_url, {
+                headers: {
+                  'accept': 'application/json'
+                }
+            })
 
             console.log('response.data.result', response.data.result)
             setNftList(response.data.result)
