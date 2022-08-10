@@ -278,7 +278,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             )} */}
 
             {approved && (
-                <form>
+                <form style={{marginTop: '2rem'}}>
                     <FormControl>
                     <Select placeholder='Select NFT' onChange={handleChange}>
                         {nftList.map((nft, i) => (

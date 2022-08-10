@@ -1,4 +1,4 @@
-import { ChakraProvider, Container, HStack, Spinner, Stack, Text, Button, Tooltip } from "@chakra-ui/react"
+import { Heading, ChakraProvider, Container, HStack, Spinner, Stack, Text, Button, Tooltip } from "@chakra-ui/react"
 import "@fontsource/inter/400.css"
 import detectEthereumProvider from "@metamask/detect-provider"
 import { Identity } from "@semaphore-protocol/identity"
@@ -91,8 +91,10 @@ function App() {
     return (
         <>
             <Container flex="1" display="flex" alignItems="center" centerContent mb={5}>
-              <h1>ZK-NFT ✨</h1>
-              {currentAccount && <Tooltip placement='right' hasArrow label='Private Trapdoor' bg='gray.500'><p>🟢  { currentAccount }</p></Tooltip>}
+                <header style={{marginBottom: '1rem'}}>
+                    <h1>ZK-NFT ✨</h1>
+                    {currentAccount && <Tooltip placement='right' hasArrow label='Private Trapdoor' bg='gray.500'><p>🟢  { currentAccount }</p></Tooltip>}
+                </header>
                 {!currentAccount && <Button mt={5} onClick={connectWallet} colorScheme="primary" isLoading={loading}>Connect Wallet</Button>}
                 {currentAccount && (<Stack mt={5}>
                     {_step === 1 ? (
