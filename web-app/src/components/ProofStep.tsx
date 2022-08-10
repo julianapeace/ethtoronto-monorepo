@@ -33,6 +33,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
     const [_proofCommitment, setProofCommitment] = useState<string[]>()
     const [hasStaked,setStaked] = useState<any>()
 
+    const [displayProof,setDisplay]= useState<string>()
     const getReviews = useCallback(async () => {
         if (!signer || !contract) {
             return []
@@ -57,13 +58,21 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             const commitments = await contract.getTreeInfo(1)
             console.log('commitments', commitments[0]);
             const commitmentData = commitments[0].map((c: any) => {
+                
                 return c.toString()
+            })
+            commitmentData.forEach((item:any)=>{
+                console.log(item)
+                console.log(item ===_identityCommitment)
+                if(item ===_identityCommitment) {
+                    setStaked(true);
+                }
             })
             console.log('commitmentData', commitmentData);
             setProofCommitment(commitmentData as string[])
         }
         getAllCommitments()
-    }, [contract, identity])
+    }, [contract, identity,hasStaked])
 
     useEffect(() => {
         const getApproved = async () => {
@@ -86,7 +95,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             }
         }
         getApproved()
-    }, [ercContract, contract, currentAccount])
+    }, [ercContract, contract, currentAccount,hasStaked])
 
     useEffect(() => {
         const getProof = async () => {
@@ -179,12 +188,12 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
             return;
         }
         try {
-            const tx = await contract.addDAOIdentity(
+            let tx = await contract.addDAOIdentity(
                 1, // entityId
-                _identityCommitment,
-                44,
+                _identityCommitment,                
                 { gasLimit: 3000000 },
             )
+            tx=await tx.wait()
             console.log(tx)
             setStaked(true)
         } catch (error) {
@@ -217,8 +226,8 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
         console.log("RESULT")
         const params = {
             proof: solidityProof,
-            nullifierHash: proof.fullProof.publicSignals.nullifierHash.toString(),
-            entityId: proof.fullProof.publicSignals.externalNullifier,
+            nullifierHash: publicSignals.nullifierHash.toString(),
+            entityId: publicSignals.externalNullifier,
             challenge: 'something',
           }
         
@@ -226,6 +235,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
           const hexified = new (Buffer as any).from(JSON.stringify(params)).toString('hex')
           
           console.log(hexified)
+          setDisplay(hexified)
     }
    
     return (
@@ -294,6 +304,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                 {hasStaked? (
                 
                 <Button colorScheme="primary" mt={5} onClick={testProof}>Generate Proof</Button>
+                
             ) : (
                
                 <Button colorScheme="primary" mt={5} onClick={stakeNFT}>Stake NFT</Button>
@@ -304,7 +315,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                
             </form>
 
-
+            <p style={{ wordWrap: "break-word",maxWidth:"1000px"}} >{displayProof}</p>
             <Divider pt="4" borderColor="gray" />
 
             <Stepper step={3} onPrevClick={onPrevClick} />

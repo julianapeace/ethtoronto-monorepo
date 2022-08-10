@@ -26,6 +26,8 @@ function App() {
     const [_event, setEvent] = useState<any>()
     
     const contractAddress = '0x5c96aB6514E7d78537e7690ebC3a78966a86534c'
+    //const contractAddress='0xfEC536b1Fe0cFcfb0CBF91FF59Bf4D8D991Cbcf8'
+    //const nftContractAddress = '0x0aee1E312CCF15162E56A3E9f29af55749DF8121'
     const nftContractAddress = '0x2487679e1264CC3DF7377C3B922aAE922C3e53Fb'
 
     useEffect(() => {
