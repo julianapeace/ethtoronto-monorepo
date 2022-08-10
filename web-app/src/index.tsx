@@ -1,4 +1,4 @@
-import { ChakraProvider, Container, HStack, Spinner, Stack, Text, Button } from "@chakra-ui/react"
+import { ChakraProvider, Container, HStack, Spinner, Stack, Text, Button, Tooltip } from "@chakra-ui/react"
 import "@fontsource/inter/400.css"
 import detectEthereumProvider from "@metamask/detect-provider"
 import { Identity } from "@semaphore-protocol/identity"
@@ -14,6 +14,8 @@ import theme from "../styles"
 import GroupStep from "./components/GroupStep"
 import IdentityStep from "./components/IdentityStep"
 import ProofStep from "./components/ProofStep"
+// import { Buttonx } from "./components/Button"
+import "./style.css"
 
 function App() {
     const [_logs, setLogs] = useState<string>("")
@@ -24,9 +26,14 @@ function App() {
     const [_ercContract, setErcContract] = useState<Contract>()
     const [currentAccount, setCurrentAccount] = useState<string>()
     const [_event, setEvent] = useState<any>()
+<<<<<<< Updated upstream
     
     const contractAddress = '0x6caf636b6e3c09548E02225b0A6Ab2E0Bc2da1C7'
     const nftContractAddress = '0x7b6e19f2748b2ce25c7b2b2837dd9722d81943aa'
+=======
+
+    const contractAddress = '0x1D68aE7BA2782F7ffF506F3aa382d0c6581643D0'
+>>>>>>> Stashed changes
 
     useEffect(() => {
         ;(async () => {
@@ -67,16 +74,16 @@ function App() {
     const connectWallet = async () => {
         try {
           const ethereum = (await detectEthereumProvider()) as any
-    
+
           if (!ethereum) {
             alert("Get MetaMask!");
             return;
           }
-    
+
           const accounts = await ethereum.request({ method: "eth_requestAccounts" });
-    
+
           console.log("Connected", accounts[0]);
-          setCurrentAccount(accounts[0]); 
+          setCurrentAccount(accounts[0]);
         } catch (error) {
           console.log(error)
         }
@@ -84,8 +91,10 @@ function App() {
 
     return (
         <>
-            <Container maxW="lg" flex="1" display="flex" alignItems="center" centerContent>
-                {!currentAccount && <Button mt={5} onClick={connectWallet} colorScheme='blue'>Connect</Button>}
+            <Container flex="1" display="flex" alignItems="center" centerContent>
+              <h1>ZK-NFT ✨</h1>
+              {currentAccount && <Tooltip placement='right' hasArrow label='Private Trapdoor' bg='gray.500'><p>🟢  { currentAccount }</p></Tooltip>}
+                {!currentAccount && <Button mt={5} onClick={connectWallet} colorScheme="primary" >Connect Wallet</Button>}
                 {currentAccount && (<Stack mt={5}>
                     {_step === 1 ? (
                         <IdentityStep onChange={setIdentity} onLog={setLogs} onNextClick={() => setStep(2)} />

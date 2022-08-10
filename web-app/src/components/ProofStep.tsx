@@ -106,6 +106,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
                 'accept': 'application/json'
               }
             })
+
             console.log('response.data.result', response.data.result)
             setNftList(response.data.result)
         }
@@ -216,7 +217,7 @@ export default function ProofStep({ currentAccount, signer, ercContract, contrac
 
             {/* <HStack pt="5" justify="space-between">
                 <Text fontWeight="bold" fontSize="lg">
-                    <b>{event.eventName}</b> ({event.members.length}) 
+                    <b>{event.eventName}</b> ({event.members.length})
                 </Text>
                 <Button
                     leftIcon={<IconRefreshLine />}
